@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from openai import OpenAI
+from anthropic import Anthropic
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import json
@@ -9,6 +10,10 @@ import json
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+anthropic_client = Anthropic(
+    api_key=os.getenv("ANTHROPIC_API_KEY")
+)
 
 app = FastAPI()
 
@@ -24,15 +29,22 @@ class AnalyzeRequest(BaseModel):
     resume_text: str
     job_description: str
 
+def clean_json_response(content: str) -> str:
+    cleaned = content.strip()
 
-@app.get("/")
-def root():
-    return {"message": "Backend is alive!"}
+    if cleaned.startswith("```json"):
+        cleaned = cleaned.removeprefix("```json").strip()
 
+    if cleaned.startswith("```"):
+        cleaned = cleaned.removeprefix("```").strip()
 
-@app.post("/analyze")
-def analyze(request: AnalyzeRequest):
-    prompt = f"""
+    if cleaned.endswith("```"):
+        cleaned = cleaned.removesuffix("```").strip()
+
+    return cleaned
+
+def build_analysis_prompt(resume_text: str, job_description: str) -> str:
+    return f"""
 You are an ATS-focused resume optimization assistant.
 
 Goal:
@@ -46,23 +58,9 @@ Rules:
 - Focus on top-of-funnel resume matching.
 - Prefer exact language from the job description when identifying keywords.
 - Do not invent experience the resume does not support.
-- Prioritize keywords that appear important to the role, especially repeated skills, required qualifications, tools, platforms, and responsibilities.
 - Rank missing keywords by importance.
 - Keep recommendations truthful and grounded in the resume.
-
-For each bullet suggestion, begin the bullet with the most appropriate resume section in brackets.
-
-Examples:
-
-[Professional Summary] Software Developer with experience building cloud-native applications using Kubernetes and Azure.
-
-[Healthfirst] Developed and maintained containerized Node.js REST APIs deployed through Kubernetes infrastructure.
-
-[Optimum Energy] Built backend APIs and cloud-native services using Java, Node.js, and AWS technologies.
-
-Choose the resume section that is the best location for the suggested bullet. Use existing resume sections whenever possible.
-
-Return the bullet suggestions as strings.
+- For each bullet suggestion, begin with the most appropriate resume section in brackets.
 
 Use this exact JSON shape:
 {{
@@ -72,35 +70,70 @@ Use this exact JSON shape:
     {{"priority": 1, "keyword": "keyword 1", "why_it_matters": "short reason"}},
     {{"priority": 2, "keyword": "keyword 2", "why_it_matters": "short reason"}}
   ],
-  "resume_optimization_opportunities": [
-    {{
-      "area": "Professional Summary",
-      "recommendation": "short recommendation"
-    }}
-  ],
-  "bullet_suggestions": ["truthful rewritten bullet 1", "truthful rewritten bullet 2"]
+  "bullet_suggestions": [
+    "[Healthfirst] Truthful rewritten bullet 1",
+    "[Professional Summary] Truthful rewritten bullet 2"
+  ]
 }}
 
 Resume:
-{request.resume_text}
+{resume_text}
 
 Job description:
-{request.job_description}
-    """
+{job_description}
+"""
 
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4.1-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0,
-        )
+def analyze_with_openai(request: AnalyzeRequest):
+    prompt = build_analysis_prompt(
+        request.resume_text,
+        request.job_description
+    )
 
-        content = response.choices[0].message.content
-        parsed = json.loads(content)
-        return parsed
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0,
+    )
 
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"OpenAI request failed: {str(e)}"
-        )
+    content = response.choices[0].message.content
+
+    return json.loads(clean_json_response(content))
+
+def analyze_with_claude(request: AnalyzeRequest):
+    prompt = build_analysis_prompt(
+        request.resume_text,
+        request.job_description
+    )
+
+    response = anthropic_client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=4000,
+        temperature=0,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
+
+    content = response.content[0].text
+
+    return json.loads(clean_json_response(content))
+
+@app.post("/analyze")
+def analyze(request: AnalyzeRequest):
+    return {
+        "results": [
+            {
+                "provider": "openai",
+                "model": "gpt-4.1-mini",
+                "analysis": analyze_with_openai(request),
+            },
+            {
+                "provider": "claude",
+                "model": "claude-haiku-4-5-20251001",
+                "analysis": analyze_with_claude(request),
+            },
+        ]
+    }
