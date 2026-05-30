@@ -2,7 +2,7 @@ import { useState } from "react";
 import "./App.css";
 
 function App() {
-  const [result, setResult] = useState(null);
+  const [results, setResults] = useState(null);
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
 
@@ -19,7 +19,7 @@ function App() {
     });
 
     const data = await response.json();
-    setResult(data);
+    setResults(data.results);
   }
 
   return (
@@ -38,16 +38,19 @@ function App() {
 
         <button onClick={analyze} type="button">Analyze</button>
       </form>
-
-      {result && (
-          <section className="results">
-
+      <section className="provider-results">
+      {results && results.map(result =>(
+        
+          <section className="provider-card">
+          <h2>{result.provider}</h2>
+          <p>{result.model}</p>
+          <p>Match Score: {result.analysis.match_score}%</p>
           <div className="keyword-sections">
 
             <section>
               <h2>Matching Keywords</h2>
               <ul>
-                {result.matching_keywords.map((keyword) => (
+                {result.analysis.matching_keywords.map((keyword) => (
                   <li key={keyword}>{keyword}</li>
                 ))}
               </ul>
@@ -56,7 +59,7 @@ function App() {
             <section>
               <h2>Missing Keywords</h2>
           <ul>
-            {result.missing_keywords.map((keyword) => (
+            {result.analysis.missing_keywords.map((keyword) => (
               <li key={keyword.priority}>Priority: {keyword.priority} keyword: {keyword.keyword}</li>
             ))}
           </ul>
@@ -67,7 +70,7 @@ function App() {
           <section>
             <h2>Suggested Resume Bullets</h2>
             <ul>
-              {result.bullet_suggestions.map((bullet) => (
+              {result.analysis.bullet_suggestions.map((bullet) => (
                 <li key={bullet}>{bullet}</li>
               ))}
             </ul>
@@ -75,7 +78,8 @@ function App() {
 
           </section>
 
-      )}
+      ))}
+      </section>
     </main>
   );
 }

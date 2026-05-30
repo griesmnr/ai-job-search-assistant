@@ -33,3 +33,9 @@ button {
   gap: 2rem;
   flex-direction: row;
 }
+
+.provider-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
