@@ -3,17 +3,26 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from openai import OpenAI
 from anthropic import Anthropic
+from google import genai
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import json
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 anthropic_client = Anthropic(
     api_key=os.getenv("ANTHROPIC_API_KEY")
 )
+
+genai_client = genai.Client(
+    api_key=os.getenv("GOOGLE_API_KEY")
+)
+
+openai_model = "gpt-4.1-mini"
+anthropic_model = "claude-haiku-4-5-20251001"
+genai_model = "gemini-3.5-flash"
 
 app = FastAPI()
 
@@ -89,8 +98,8 @@ def analyze_with_openai(request: AnalyzeRequest):
         request.job_description
     )
 
-    response = client.chat.completions.create(
-        model="gpt-4.1-mini",
+    response = openai_client.chat.completions.create(
+        model=openai_model,
         messages=[{"role": "user", "content": prompt}],
         temperature=0,
     )
@@ -106,7 +115,7 @@ def analyze_with_claude(request: AnalyzeRequest):
     )
 
     response = anthropic_client.messages.create(
-        model="claude-haiku-4-5-20251001",
+        model=anthropic_model,
         max_tokens=4000,
         temperature=0,
         messages=[
@@ -121,19 +130,39 @@ def analyze_with_claude(request: AnalyzeRequest):
 
     return json.loads(clean_json_response(content))
 
+def analyze_with_gemini(request: AnalyzeRequest):
+    prompt = build_analysis_prompt(
+        request.resume_text,
+        request.job_description
+    )
+
+    response = genai_client.models.generate_content(
+        model=genai_model,
+        contents=prompt
+    )
+
+    content = response.text
+
+    return json.loads(clean_json_response(content))
+
 @app.post("/analyze")
 def analyze(request: AnalyzeRequest):
     return {
         "results": [
             {
                 "provider": "openai",
-                "model": "gpt-4.1-mini",
+                "model": openai_model,
                 "analysis": analyze_with_openai(request),
             },
             {
                 "provider": "claude",
-                "model": "claude-haiku-4-5-20251001",
+                "model": anthropic_model,
                 "analysis": analyze_with_claude(request),
+            },
+            {
+                "provider": "gemini",
+                "model": genai_model,
+                "analysis": analyze_with_gemini(request),
             },
         ]
     }
