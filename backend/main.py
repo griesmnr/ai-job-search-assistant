@@ -7,6 +7,7 @@ from google import genai
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import json
+SYNTHESIS_PROVIDER = "openai"
 
 load_dotenv()
 
@@ -24,6 +25,7 @@ openai_model = "gpt-4.1-mini"
 anthropic_model = "claude-haiku-4-5-20251001"
 genai_model = "gemini-3.5-flash"
 
+
 app = FastAPI()
 
 app.add_middleware(
@@ -37,6 +39,9 @@ app.add_middleware(
 class AnalyzeRequest(BaseModel):
     resume_text: str
     job_description: str
+
+class SynthesizeRequest(BaseModel):
+    results: list[dict]
 
 def clean_json_response(content: str) -> str:
     cleaned = content.strip()
@@ -166,3 +171,87 @@ def analyze(request: AnalyzeRequest):
             },
         ]
     }
+
+def build_synthesis_prompt(results: list[dict]) -> str:
+    return f"""
+You are synthesizing resume optimization analyses from multiple AI providers.
+
+Goal:
+Help the user quickly decide what resume changes to make for this specific job application.
+
+You will receive several model analyses. Each analysis may contain:
+- match_score
+- matching_keywords
+- missing_keywords
+- bullet_suggestions
+
+Return valid JSON only.
+No markdown.
+No explanation outside the JSON.
+
+Rules:
+- Focus on practical resume changes, not abstract commentary.
+- Identify where the models agree.
+- Identify meaningful disagreements or differences in emphasis.
+- Prioritize recommendations that appear across multiple models.
+- Do not invent experience.
+- Keep recommendations truthful and grounded in the provided analyses.
+- Prefer concrete next steps the user can take quickly.
+- If multiple models suggest similar bullets, consolidate them.
+
+Use this exact JSON shape:
+{{
+  "overall_summary": "short summary of the combined model opinions",
+  "consensus_missing_keywords": [
+    {{
+      "keyword": "keyword",
+      "why_it_matters": "short reason"
+    }}
+  ],
+  "notable_model_differences": [
+    {{
+      "topic": "topic",
+      "difference": "short explanation"
+    }}
+  ],
+  "recommended_next_steps": [
+    {{
+      "priority": 1,
+      "action": "specific action the user should take"
+    }}
+  ],
+  "best_bullet_suggestions": [
+    "[Resume Section] Bullet text"
+  ]
+}}
+
+Model analyses:
+{json.dumps(results, indent=2)}
+"""
+
+@app.post("/synthesize")
+def synthesize(request: SynthesizeRequest):
+    prompt = build_synthesis_prompt(request.results)
+
+    try:
+        response = openai_client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+        )
+
+        content = response.choices[0].message.content
+
+        return json.loads(clean_json_response(content))
+
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Synthesis model returned invalid JSON."
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Synthesis request failed: {str(e)}"
+        )
