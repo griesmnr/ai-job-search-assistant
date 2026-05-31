@@ -3,6 +3,7 @@ import "./App.css";
 
 function App() {
   const [results, setResults] = useState(null);
+  const [synthResults, setSynthResults] = useState(null);
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
 
@@ -22,6 +23,21 @@ function App() {
     setResults(data.results);
   }
 
+    async function synthesize() {
+    const response = await fetch("http://127.0.0.1:8000/synthesize", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        results: results
+      }),
+    });
+
+    const data = await response.json();
+    setSynthResults(data);
+  }
+
   return (
     <main>
       <h1>AI Job Search Assistant</h1>
@@ -37,7 +53,51 @@ function App() {
         </label>
 
         <button onClick={analyze} type="button">Analyze</button>
+        {results &&  <button onClick={synthesize} type="button">Synthesize</button>}
       </form>
+
+      {synthResults && (
+        <section className="synthesis-results">
+
+          <h2>Recommended Next Steps</h2>
+          <ol>
+            {synthResults.recommended_next_steps.map((step) => (
+              <li key={step.priority}>
+                {step.action}
+              </li>
+            ))}
+          </ol>
+
+          <h2>Consensus Missing Keywords</h2>
+          <ul>
+            {synthResults.consensus_missing_keywords.map((item) => (
+              <li key={item.keyword}>
+                <strong>{item.keyword}</strong>
+                <br />
+                {item.why_it_matters}
+              </li>
+            ))}
+          </ul>
+
+          <h2>Best Resume Bullets</h2>
+          <ul>
+            {synthResults.best_bullet_suggestions.map((bullet) => (
+              <li key={bullet}>{bullet}</li>
+            ))}
+          </ul>
+
+          <h2>Model Differences</h2>
+          <ul>
+            {synthResults.notable_model_differences.map((item) => (
+              <li key={item.topic}>
+                <strong>{item.topic}</strong>: {item.difference}
+              </li>
+            ))}
+          </ul>
+
+        </section>
+      )}
+
       <section className="provider-results">
       {results && results.map(result =>(
         
