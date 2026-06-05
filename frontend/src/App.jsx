@@ -8,6 +8,8 @@ function App() {
   const [jobDescription, setJobDescription] = useState("");
 
   async function analyze() {
+    setResults(null);
+    setSynthResults(null);
     const response = await fetch("http://127.0.0.1:8000/analyze", {
       method: "POST",
       headers: {
@@ -21,6 +23,7 @@ function App() {
 
     const data = await response.json();
     setResults(data.results);
+    
   }
 
     async function synthesize() {
@@ -30,7 +33,8 @@ function App() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        results: results
+        results: results,
+        originalResumeText: resumeText
       }),
     });
 
@@ -94,6 +98,9 @@ function App() {
               </li>
             ))}
           </ul>
+
+          <h2>New Resume!</h2>
+          <pre className="resume-output">{synthResults.new_resume_text}</pre>
 
         </section>
       )}

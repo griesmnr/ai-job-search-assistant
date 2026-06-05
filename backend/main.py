@@ -42,6 +42,7 @@ class AnalyzeRequest(BaseModel):
 
 class SynthesizeRequest(BaseModel):
     results: list[dict]
+    originalResumeText: str
 
 def clean_json_response(content: str) -> str:
     cleaned = content.strip()
@@ -172,7 +173,7 @@ def analyze(request: AnalyzeRequest):
         ]
     }
 
-def build_synthesis_prompt(results: list[dict]) -> str:
+def build_synthesis_prompt(results: list[dict], originalResumeText: str) -> str:
     return f"""
 You are synthesizing resume optimization analyses from multiple AI providers.
 
@@ -222,16 +223,29 @@ Use this exact JSON shape:
   ],
   "best_bullet_suggestions": [
     "[Resume Section] Bullet text"
-  ]
+  ],
+  "new_resume_text": "entirely new resume, in exact structure of the old, with best guess changes implemented
 }}
 
 Model analyses:
 {json.dumps(results, indent=2)}
+
+Original resume:
+{json.dumps(originalResumeText)}
+
+When returning the rewritten resume, preserve a plain-text resume format.
+
+Rules:
+- Preserve section headings.
+- Preserve line breaks between sections.
+- Use bullet points with "- ".
+- Do not collapse the resume into paragraphs.
+- Return the full rewritten resume as a single string field called "new_resume_text".
 """
 
 @app.post("/synthesize")
 def synthesize(request: SynthesizeRequest):
-    prompt = build_synthesis_prompt(request.results)
+    prompt = build_synthesis_prompt(request.results, request.originalResumeText)
 
     try:
         response = openai_client.chat.completions.create(
