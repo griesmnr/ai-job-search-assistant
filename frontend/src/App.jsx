@@ -1,11 +1,50 @@
 import { useState } from "react";
 import "./App.css";
+import { diffLines } from "diff";
+
+
+
 
 function App() {
   const [results, setResults] = useState(null);
   const [synthResults, setSynthResults] = useState(null);
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
+  const [changeDecisions, setChangeDecisions] = useState({});
+  const diffParts = synthResults
+  ? diffLines(resumeText, synthResults.new_resume_text)
+  : [];
+
+  const finalResumeText = buildFinalResume(diffParts, changeDecisions);
+
+  function setDecision(index, decision) {
+    setChangeDecisions({
+      ...changeDecisions,
+      [index]: decision,
+    });
+  }
+
+  function buildFinalResume(diffParts, changeDecisions) {
+    return diffParts
+      .map((part, index) => {
+        const decision = changeDecisions[index];
+
+        if (!part.added && !part.removed) {
+          return part.value;
+        }
+
+        if (part.added) {
+          return decision === "approved" ? part.value : "";
+        }
+
+        if (part.removed) {
+          return decision === "rejected" ? part.value : "";
+        }
+
+        return "";
+      })
+      .join("");
+  }
 
   async function analyze() {
     setResults(null);
@@ -61,6 +100,7 @@ function App() {
       </form>
 
       {synthResults && (
+        <>
         <section className="synthesis-results">
 
           <h2>Recommended Next Steps</h2>
@@ -103,6 +143,63 @@ function App() {
           <pre className="resume-output">{synthResults.new_resume_text}</pre>
 
         </section>
+
+        <section className="diff-viewer">
+          
+          {diffParts.map((part, index) => {
+            const className = part.added
+              ? "diff-added"
+              : part.removed
+              ? "diff-removed"
+              : "diff-unchanged";
+
+          return (
+            <div className={`diff-row `} key={index}>
+              <div className={`diff-content ${className}`}>
+                <pre>{part.value}</pre>
+              </div>
+
+              <div className="diff-actions">
+                {(part.added || part.removed) && (
+                  <>
+                    <button
+                      className={
+                        changeDecisions[index] === "approved"
+                          ? "decision-button selected-approve"
+                          : "decision-button"
+                      }
+                      onClick={() => setDecision(index, "approved")}
+                    >
+                      Approve
+                    </button>
+
+                    <button
+                      className={
+                        changeDecisions[index] === "rejected"
+                          ? "decision-button selected-reject"
+                          : "decision-button"
+                      }
+                      onClick={() => setDecision(index, "rejected")}
+                    >
+                      Reject
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          );
+          })}
+        </section>
+        
+        {synthResults?.new_resume_text && (
+          <section className="final-resume">
+            <h2>Final Resume</h2>
+            <pre>{finalResumeText}</pre>
+          </section>
+        )}     
+      
+      </>
+
       )}
 
       <section className="provider-results">

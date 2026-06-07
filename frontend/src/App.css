@@ -44,3 +44,87 @@ button {
   white-space: pre-wrap;
   font-family: monospace;
 }
+
+.diff-viewer {
+  margin-top: 2rem;
+  font-family: monospace;
+  white-space: pre-wrap;
+  border: 1px solid #ccc;
+}
+
+.diff-line {
+  padding: 0.25rem 0.5rem;
+}
+
+.diff-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: start;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.diff-content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.diff-content pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: monospace;
+}
+
+.diff-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.diff-added {
+  background: #d1fae5;
+}
+
+.diff-removed {
+  background: #fee2e2;
+}
+
+.diff-unchanged {
+  background: white;
+}
+
+.decision-button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #999;
+  background: white;
+  cursor: pointer;
+  color: #333;
+}
+
+.selected-approve {
+  background: #16a34a;
+  color: white;
+  border-color: #16a34a;
+}
+
+.selected-reject {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+}
+
+.final-resume {
+  margin-top: 2rem;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  background: white;
+}
+
+.final-resume pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: monospace;
+}
