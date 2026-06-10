@@ -76,11 +76,15 @@ Rules:
 - Rank missing keywords by importance.
 - Keep recommendations truthful and grounded in the resume.
 - For each bullet suggestion, begin with the most appropriate resume section in brackets.
+- After calculating the match score, provide a brief explanation (2-4 sentences) 
+    describing the primary factors that influenced the score. Mention the strongest matches, 
+    the most important missing qualifications, and any significant strengths or gaps that 
+    affected the evaluation.
 
 Use this exact JSON shape:
 {{
   "match_score": 87,
-  "matching_keywords": ["keyword 1", "keyword 2"],
+  "match_score_explanation": "...",
   "missing_keywords": [
     {{"priority": 1, "keyword": "keyword 1", "why_it_matters": "short reason"}},
     {{"priority": 2, "keyword": "keyword 2", "why_it_matters": "short reason"}}
@@ -241,6 +245,32 @@ Rules:
 - Use bullet points with "- ".
 - Do not collapse the resume into paragraphs.
 - Return the full rewritten resume as a single string field called "new_resume_text".
+Preserve the existing resume structure.
+
+Preserve section order.
+
+Preserve existing bullet points whenever possible.
+
+Prefer modifying existing bullets over replacing entire sections.
+
+Make the smallest changes necessary to improve alignment with the job description.
+
+Do not rewrite sections that already match well.
+
+Add, remove, or modify individual bullets only when justified.
+
+Return a resume that differs from the original as little as possible while still improving relevance to the job description.
+
+Preserve the formatting style of the original resume.
+
+If the original resume uses plain lines without bullet characters,
+do not introduce bullet characters.
+
+Maintain the original presentation style and spacing wherever possible.
+
+Do not add bullets, numbering, or other formatting that does not already exist.
+
+
 """
 
 @app.post("/synthesize")

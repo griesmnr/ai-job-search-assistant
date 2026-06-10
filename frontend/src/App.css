@@ -126,5 +126,72 @@ button {
 .final-resume pre {
   margin: 0;
   white-space: pre-wrap;
-  font-family: monospace;
+  font-family: inherit;
+}
+
+.final-resume-output {
+  width: 100%;
+  min-height: 500px;
+  white-space: pre-wrap;
+}
+
+.provider-header-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.provider-header {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.comparison-table {
+  display: grid;
+  grid-template-columns: 180px repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.comparison-column-header {
+  text-align: center;
+  font-weight: 700;
+}
+
+.comparison-column-header h3 {
+  font-size: 1.7rem;
+  margin: 0;
+}
+
+.comparison-column-header p {
+  margin: 0.25rem 0 0;
+}
+
+.comparison-row-label {
+  font-size: 1.2rem;
+  font-weight: 700;
+  align-self: start;
+  padding-top: 1rem;
+}
+
+.match-score-number {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.score-card {
+  text-align: center;
+}
+
+.score-card h4 {
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.score-card p:not(.match-score-number) {
+  text-align: left;
 }
