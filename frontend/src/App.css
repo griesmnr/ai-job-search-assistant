@@ -118,9 +118,10 @@ button {
 
 .final-resume {
   margin-top: 2rem;
-  padding: 1rem;
-  border: 1px solid #ddd;
-  background: white;
+}
+
+.final-resume h2 {
+  margin-bottom: 0.75rem;
 }
 
 .final-resume pre {
@@ -132,9 +133,10 @@ button {
 .final-resume-output {
   width: 100%;
   min-height: 500px;
+  padding: 1rem;
   white-space: pre-wrap;
+  font: inherit;
 }
-
 .provider-header-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -194,4 +196,70 @@ button {
 
 .score-card p:not(.match-score-number) {
   text-align: left;
+}
+
+.score-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.score-card-large {
+  padding: 1.5rem;
+  border: 1px solid #ddd;
+  background: white;
+  text-align: center;
+}
+
+.score-card-large h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+}
+
+.score-card-large {
+  padding: 1.5rem;
+  border: 1px solid #444;
+  background: transparent;
+  text-align: center;
+}
+
+.more-info-section {
+  margin-top: 2rem;
+}
+
+.spinner-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  justify-content: center;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+
+  border: 3px solid #555;
+  border-top: 3px solid #fff;
+
+  border-radius: 50%;
+
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.diff-controls {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  text-align: center;
 }

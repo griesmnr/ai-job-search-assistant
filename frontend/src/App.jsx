@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import { diffLines } from "diff";
 
@@ -8,9 +8,12 @@ function App() {
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [changeDecisions, setChangeDecisions] = useState({});
-  const [analysisExpanded, setAnalysisExpanded] = useState(true);
+  const [moreInfoExpanded, setMoreInfoExpanded] = useState(false);
+  const [isTailoring, setIsTailoring] = useState(false);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  
 
-  const diffParts = synthResults
+  const diffParts = synthResults?.new_resume_text
     ? diffLines(resumeText, synthResults.new_resume_text)
     : [];
 
@@ -22,6 +25,57 @@ function App() {
       [index]: decision,
     });
   }
+
+  function approveAllChanges() {
+    const approvals = { ...changeDecisions };
+
+    diffParts.forEach((part, index) => {
+      if (part.added || part.removed) {
+        approvals[index] = "approved";
+      }
+    });
+
+    setChangeDecisions(approvals);
+  }
+
+  const unresolvedChanges = diffParts.some((part, index) => {
+    if (!part.added && !part.removed) {
+      return false;
+    }
+
+    return !changeDecisions[index];
+  });
+
+  const allChangesReviewed = !unresolvedChanges;
+
+  const loadingMessages = [
+    "Reading resume...",
+    "Reviewing job description...",
+    "Consulting OpenAI...",
+    "Consulting Claude...",
+    "Consulting Gemini...",
+    "Building resume...",
+    "Almost ready..."
+  ];
+
+  useEffect(() => {
+    if (!isTailoring) {
+      setLoadingMessageIndex(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setLoadingMessageIndex((current) => {
+        if (current >= loadingMessages.length - 1) {
+          return current;
+        }
+
+        return current + 1;
+      });
+    }, 1800);
+
+    return () => clearInterval(interval);
+  }, [isTailoring]);
 
   function buildFinalResume(diffParts, changeDecisions) {
     return diffParts
@@ -45,45 +99,45 @@ function App() {
       .join("");
   }
 
-  async function analyze() {
+  async function tailorResume() {
+    setIsTailoring(true);
     setResults(null);
     setSynthResults(null);
     setChangeDecisions({});
-    setAnalysisExpanded(true);
+    setMoreInfoExpanded(false);
 
-    const response = await fetch("http://127.0.0.1:8000/analyze", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        resume_text: resumeText,
-        job_description: jobDescription,
-      }),
-    });
+    try {
+      const analyzeResponse = await fetch("http://127.0.0.1:8000/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          resume_text: resumeText,
+          job_description: jobDescription,
+        }),
+      });
 
-    const data = await response.json();
-    setResults(data.results);
-  }
+      const analyzeData = await analyzeResponse.json();
+      setResults(analyzeData.results);
 
-  async function synthesize() {
-    setSynthResults(null);
-    setChangeDecisions({});
-    setAnalysisExpanded(false);
+      const synthesizeResponse = await fetch("http://127.0.0.1:8000/synthesize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          results: analyzeData.results,
+          originalResumeText: resumeText,
+          job_description: jobDescription,
+        }),
+      });
 
-    const response = await fetch("http://127.0.0.1:8000/synthesize", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        results: results,
-        originalResumeText: resumeText,
-      }),
-    });
-
-    const data = await response.json();
-    setSynthResults(data);
+      const synthesizeData = await synthesizeResponse.json();
+      setSynthResults(synthesizeData);
+    } finally {
+      setIsTailoring(false);
+    }
   }
 
   return (
@@ -107,32 +161,78 @@ function App() {
           />
         </label>
 
-        <button onClick={analyze} type="button">
-          Analyze
+        <button onClick={tailorResume} type="button" disabled={isTailoring}>
+          {isTailoring ? "Tailoring..." : "Tailor My Resume"}
         </button>
 
-        {results && (
-          <button onClick={synthesize} type="button">
-            Synthesize
-          </button>
+        {isTailoring && (
+          <div className="spinner-container">
+            <div className="spinner"></div>
+
+            <span>
+              {loadingMessages[loadingMessageIndex]}
+            </span>
+          </div>
         )}
       </form>
 
-      <section className="analysis-section">
+      {synthResults && (
+        <section className="score-summary">
+          <div className="score-card-large">
+            <h2>Current Resume Job Match Score</h2>
+            <p>{synthResults.average_original_match_score}%</p>
+          </div>
 
-        <button
-          className="collapse-toggle"
-          onClick={() => setAnalysisExpanded(!analysisExpanded)}
-        >
-          {analysisExpanded
-            ? "▼ Hide Analysis"
-            : "▶ Show Analysis"}
-        </button>
+          <div className="score-card-large">
+            <h2>New Resume Job Match Score</h2>
+            <p>{synthResults.estimated_new_match_score}%</p>
+          </div>
+        </section>
+      )}
 
-        {analysisExpanded && (
-          <>
-            
-            {results && results.length > 0 && (
+      {results && synthResults && (
+        <section className="more-info-section">
+          <button
+            className="collapse-toggle"
+            onClick={() => setMoreInfoExpanded(!moreInfoExpanded)}
+          >
+            {moreInfoExpanded ? "▼ Less Information" : "▶ More Information"}
+          </button>
+
+          {moreInfoExpanded && (
+            <>
+              <section className="synthesis-results">
+                <h2>What is happening?</h2>
+                <p>3 different AI models were consulted to get information on how well your resume
+                  matches for this job. Below explains some of the key takeaways from all 3 models, 
+                  and then a breakdown of each model's opinion more granularly.
+                </p>
+                <br/>
+
+                <h2>Model Differences</h2>
+                <ul>
+                  {synthResults.notable_model_differences.map((item) => (
+                    <li key={item.topic}>
+                      <strong>{item.topic}</strong>: {item.difference}
+                    </li>
+                  ))}
+                </ul>
+
+                <h2>Recommended Next Steps</h2>
+                <ol>
+                  {synthResults.recommended_next_steps.map((step) => (
+                    <li key={step.priority}>{step.action}</li>
+                  ))}
+                </ol>
+
+                {synthResults.estimated_new_match_score_explanation && (
+                  <>
+                    <h2>New Score Explanation</h2>
+                    <p>{synthResults.estimated_new_match_score_explanation}</p>
+                  </>
+                )}
+              </section>
+
               <section className="comparison-table">
                 <div className="comparison-corner"></div>
 
@@ -146,7 +246,10 @@ function App() {
                 <div className="comparison-row-label">Match Score</div>
 
                 {results.map((result) => (
-                  <section className="provider-card score-card" key={`${result.provider}-score`}>
+                  <section
+                    className="provider-card score-card"
+                    key={`${result.provider}-score`}
+                  >
                     <p className="match-score-number">
                       {result.analysis.match_score}%
                     </p>
@@ -174,37 +277,22 @@ function App() {
                     </ul>
                   </section>
                 ))}
-
               </section>
-            )}
-          </>
-        )}
-
-      </section>
-
- 
+            </>
+          )}
+        </section>
+      )}
 
       {synthResults && (
         <>
-          <section className="synthesis-results">
-            <h2>Model Differences</h2>
-            <ul>
-              {synthResults.notable_model_differences.map((item) => (
-                <li key={item.topic}>
-                  <strong>{item.topic}</strong>: {item.difference}
-                </li>
-              ))}
-            </ul>
-
-            <h2>Recommended Next Steps</h2>
-            <ol>
-              {synthResults.recommended_next_steps.map((step) => (
-                <li key={step.priority}>{step.action}</li>
-              ))}
-            </ol>
-          </section>
-
+        <h2>Proposed Resume Changes for your Review:</h2>
+        <section className="diff-controls">
+          <button onClick={approveAllChanges}>
+            Approve All Changes
+          </button>
+        </section>
           <section className="diff-viewer">
+            
             {diffParts.map((part, index) => {
               const className = part.added
                 ? "diff-added"
@@ -250,20 +338,27 @@ function App() {
             })}
           </section>
 
-          {synthResults?.new_resume_text && (
+          {allChangesReviewed ? (
             <section className="final-resume">
               <h2>Final Resume</h2>
+
               <textarea
                 className="final-resume-output"
                 value={finalResumeText}
                 readOnly
               />
             </section>
+          ) : (
+            <section className="final-resume">
+              <h2>Final Resume</h2>
+
+              <p>
+                Review all proposed changes before generating the final resume.
+              </p>
+            </section>
           )}
         </>
       )}
-
-
     </main>
   );
 }
