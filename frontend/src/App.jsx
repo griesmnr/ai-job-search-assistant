@@ -8,6 +8,7 @@ function App() {
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [changeDecisions, setChangeDecisions] = useState({});
+  const [analysisExpanded, setAnalysisExpanded] = useState(true);
 
   const diffParts = synthResults
     ? diffLines(resumeText, synthResults.new_resume_text)
@@ -48,6 +49,7 @@ function App() {
     setResults(null);
     setSynthResults(null);
     setChangeDecisions({});
+    setAnalysisExpanded(true);
 
     const response = await fetch("http://127.0.0.1:8000/analyze", {
       method: "POST",
@@ -67,6 +69,7 @@ function App() {
   async function synthesize() {
     setSynthResults(null);
     setChangeDecisions({});
+    setAnalysisExpanded(false);
 
     const response = await fetch("http://127.0.0.1:8000/synthesize", {
       method: "POST",
@@ -115,34 +118,75 @@ function App() {
         )}
       </form>
 
+      <section className="analysis-section">
+
+        <button
+          className="collapse-toggle"
+          onClick={() => setAnalysisExpanded(!analysisExpanded)}
+        >
+          {analysisExpanded
+            ? "▼ Hide Analysis"
+            : "▶ Show Analysis"}
+        </button>
+
+        {analysisExpanded && (
+          <>
+            
+            {results && results.length > 0 && (
+              <section className="comparison-table">
+                <div className="comparison-corner"></div>
+
+                {results.map((result) => (
+                  <div className="comparison-column-header" key={result.provider}>
+                    <h3>{result.provider}</h3>
+                    <p>{result.model}</p>
+                  </div>
+                ))}
+
+                <div className="comparison-row-label">Match Score</div>
+
+                {results.map((result) => (
+                  <section className="provider-card score-card" key={`${result.provider}-score`}>
+                    <p className="match-score-number">
+                      {result.analysis.match_score}%
+                    </p>
+
+                    <h4>Explanation</h4>
+                    <p>{result.analysis.match_score_explanation}</p>
+                  </section>
+                ))}
+
+                <div className="comparison-row-label">Missing Keywords</div>
+
+                {results.map((result) => (
+                  <section
+                    className="provider-card"
+                    key={`${result.provider}-keywords`}
+                  >
+                    <ul>
+                      {result.analysis.missing_keywords.map((keyword) => (
+                        <li
+                          key={`${result.provider}-${keyword.priority}-${keyword.keyword}`}
+                        >
+                          Priority: {keyword.priority} keyword: {keyword.keyword}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+
+              </section>
+            )}
+          </>
+        )}
+
+      </section>
+
+ 
+
       {synthResults && (
         <>
           <section className="synthesis-results">
-            <h2>Recommended Next Steps</h2>
-            <ol>
-              {synthResults.recommended_next_steps.map((step) => (
-                <li key={step.priority}>{step.action}</li>
-              ))}
-            </ol>
-
-            <h2>Consensus Missing Keywords</h2>
-            <ul>
-              {synthResults.consensus_missing_keywords.map((item) => (
-                <li key={item.keyword}>
-                  <strong>{item.keyword}</strong>
-                  <br />
-                  {item.why_it_matters}
-                </li>
-              ))}
-            </ul>
-
-            <h2>Best Resume Bullets</h2>
-            <ul>
-              {synthResults.best_bullet_suggestions.map((bullet) => (
-                <li key={bullet}>{bullet}</li>
-              ))}
-            </ul>
-
             <h2>Model Differences</h2>
             <ul>
               {synthResults.notable_model_differences.map((item) => (
@@ -151,6 +195,13 @@ function App() {
                 </li>
               ))}
             </ul>
+
+            <h2>Recommended Next Steps</h2>
+            <ol>
+              {synthResults.recommended_next_steps.map((step) => (
+                <li key={step.priority}>{step.action}</li>
+              ))}
+            </ol>
           </section>
 
           <section className="diff-viewer">
@@ -212,65 +263,7 @@ function App() {
         </>
       )}
 
-      {results && results.length > 0 && (
-        <section className="comparison-table">
-          <div className="comparison-corner"></div>
 
-          {results.map((result) => (
-            <div className="comparison-column-header" key={result.provider}>
-              <h3>{result.provider}</h3>
-              <p>{result.model}</p>
-            </div>
-          ))}
-
-          <div className="comparison-row-label">Match Score</div>
-
-          {results.map((result) => (
-            <section className="provider-card score-card" key={`${result.provider}-score`}>
-              <p className="match-score-number">
-                {result.analysis.match_score}%
-              </p>
-
-              <h4>Explanation</h4>
-              <p>{result.analysis.match_score_explanation}</p>
-            </section>
-          ))}
-
-          <div className="comparison-row-label">Missing Keywords</div>
-
-          {results.map((result) => (
-            <section
-              className="provider-card"
-              key={`${result.provider}-keywords`}
-            >
-              <ul>
-                {result.analysis.missing_keywords.map((keyword) => (
-                  <li
-                    key={`${result.provider}-${keyword.priority}-${keyword.keyword}`}
-                  >
-                    Priority: {keyword.priority} keyword: {keyword.keyword}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-
-          <div className="comparison-row-label">Suggested Resume Bullets</div>
-
-          {results.map((result) => (
-            <section
-              className="provider-card"
-              key={`${result.provider}-bullets`}
-            >
-              <ul>
-                {result.analysis.bullet_suggestions.map((bullet) => (
-                  <li key={`${result.provider}-${bullet}`}>{bullet}</li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </section>
-      )}
     </main>
   );
 }
