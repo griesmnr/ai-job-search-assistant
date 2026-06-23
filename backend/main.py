@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from typing import Optional
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -8,14 +9,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from concurrent.futures import ThreadPoolExecutor
 import os
 import json
+from fastapi import Header
 
 SYNTHESIS_PROVIDER = "openai"
 
-load_dotenv()
+load_dotenv(".env.local", override=True)
 
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 genai_client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+APP_ACCESS_SECRET = os.getenv("VITE_APP_ACCESS_SECRET")
 
 openai_model = "gpt-4.1-mini"
 anthropic_model = "claude-haiku-4-5-20251001"
@@ -42,6 +45,13 @@ class SynthesizeRequest(BaseModel):
     originalResumeText: str
     job_description: str
 
+
+def validate_secret(app_secret: Optional[str]):
+    if app_secret != APP_ACCESS_SECRET:
+        raise HTTPException(
+            status_code=401,
+            detail="Unauthorized"
+        )
 
 def clean_json_response(content: str) -> str:
     cleaned = content.strip()
@@ -154,7 +164,8 @@ def analyze_with_gemini(request: AnalyzeRequest):
 
 
 @app.post("/analyze")
-def analyze(request: AnalyzeRequest):
+def analyze(request: AnalyzeRequest, x_app_secret: Optional[str] = Header(default=None)):
+    validate_secret(x_app_secret)
     providers = [
         {
             "provider": "openai",
@@ -291,7 +302,10 @@ Job description:
 
 
 @app.post("/synthesize")
-def synthesize(request: SynthesizeRequest):
+def synthesize(request: SynthesizeRequest, x_app_secret: Optional[str] = Header(default=None)):
+    
+    validate_secret(x_app_secret)
+    
     average_original_match_score = calculate_average_match_score(request.results)
 
     prompt = build_synthesis_prompt(

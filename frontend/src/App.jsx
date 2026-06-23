@@ -110,11 +110,11 @@ function App() {
     setMoreInfoExpanded(false);
 
     try {
-      const analyzeResponse = await fetch(`"${apiBaseUrl}/analyze"`, {
+      const analyzeResponse = await fetch(`${apiBaseUrl}/analyze`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-App-Secret": `"${appSecret}"`
+          "X-App-Secret": `${appSecret}`
         },
         body: JSON.stringify({
           resume_text: resumeText,
@@ -125,11 +125,11 @@ function App() {
       const analyzeData = await analyzeResponse.json();
       setResults(analyzeData.results);
 
-      const synthesizeResponse = await fetch(`"${apiBaseUrl}/synthesize"`, {
+      const synthesizeResponse = await fetch(`${apiBaseUrl}/synthesize`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-App-Secret": `"${appSecret}"`
+          "X-App-Secret": `${appSecret}`
         },
         body: JSON.stringify({
           results: analyzeData.results,
