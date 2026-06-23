@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import "./App.css";
 import { diffLines } from "diff";
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;
+
 function App() {
   const [results, setResults] = useState(null);
   const [synthResults, setSynthResults] = useState(null);
@@ -107,10 +110,11 @@ function App() {
     setMoreInfoExpanded(false);
 
     try {
-      const analyzeResponse = await fetch("http://127.0.0.1:8000/analyze", {
+      const analyzeResponse = await fetch(`"${apiBaseUrl}/analyze"`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-App-Secret": `"${appSecret}"`
         },
         body: JSON.stringify({
           resume_text: resumeText,
@@ -121,10 +125,11 @@ function App() {
       const analyzeData = await analyzeResponse.json();
       setResults(analyzeData.results);
 
-      const synthesizeResponse = await fetch("http://127.0.0.1:8000/synthesize", {
+      const synthesizeResponse = await fetch(`"${apiBaseUrl}/synthesize"`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-App-Secret": `"${appSecret}"`
         },
         body: JSON.stringify({
           results: analyzeData.results,
