@@ -137,6 +137,14 @@ button {
   white-space: pre-wrap;
   font: inherit;
 }
+
+.cover-letter-output {
+  width: 100%;
+  min-height: 500px;
+  padding: 1rem;
+  white-space: pre-wrap;
+  font: inherit;
+}
 .provider-header-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));

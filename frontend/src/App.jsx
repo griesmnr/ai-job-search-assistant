@@ -236,7 +236,8 @@ function App() {
               <section className="comparison-table">
                 <div className="comparison-corner"></div>
 
-                {results.map((result) => (
+                {results
+                  .map((result) => (
                   <div className="comparison-column-header" key={result.provider}>
                     <h3>{result.provider}</h3>
                     <p>{result.model}</p>
@@ -247,15 +248,27 @@ function App() {
 
                 {results.map((result) => (
                   <section
-                    className="provider-card score-card"
+                    className={`provider-card score-card ${result.success ? "" : "provider-error-card"}`}
                     key={`${result.provider}-score`}
                   >
-                    <p className="match-score-number">
-                      {result.analysis.match_score}%
-                    </p>
+                    {result.success ? (
+                      <>
+                        <p className="match-score-number">
+                          {result.analysis.match_score}%
+                        </p>
 
-                    <h4>Explanation</h4>
-                    <p>{result.analysis.match_score_explanation}</p>
+                        <h4>Explanation</h4>
+                        <p>{result.analysis.match_score_explanation}</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="provider-unavailable">Unavailable</p>
+                        <h4>Provider Error</h4>
+                        <p>
+                          {result.provider} could not complete this analysis. The resume was tailored using the available models.
+                        </p>
+                      </>
+                    )}
                   </section>
                 ))}
 
@@ -263,18 +276,27 @@ function App() {
 
                 {results.map((result) => (
                   <section
-                    className="provider-card"
+                    className={`provider-card ${result.success ? "" : "provider-error-card"}`}
                     key={`${result.provider}-keywords`}
                   >
-                    <ul>
-                      {result.analysis.missing_keywords.map((keyword) => (
-                        <li
-                          key={`${result.provider}-${keyword.priority}-${keyword.keyword}`}
-                        >
-                          Priority: {keyword.priority} keyword: {keyword.keyword}
-                        </li>
-                      ))}
-                    </ul>
+                    {result.success ? (
+                      <ul>
+                        {result.analysis.missing_keywords.map((keyword) => (
+                          <li
+                            key={`${result.provider}-${keyword.priority}-${keyword.keyword}`}
+                          >
+                            Priority: {keyword.priority} keyword: {keyword.keyword}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <>
+                        <p className="provider-unavailable">Unavailable</p>
+                        <p>
+                          Missing keywords are unavailable because {result.provider} could not complete this analysis.
+                        </p>
+                      </>
+                    )}
                   </section>
                 ))}
               </section>
@@ -345,6 +367,12 @@ function App() {
               <textarea
                 className="final-resume-output"
                 value={finalResumeText}
+                readOnly
+              />
+
+              <textarea
+                className="cover-letter-output"
+                value={synthResults.cover_letter}
                 readOnly
               />
             </section>

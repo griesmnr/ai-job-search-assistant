@@ -174,13 +174,23 @@ def analyze(request: AnalyzeRequest):
     ]
 
     def run_provider(provider_config):
-        analysis = provider_config["function"](request)
+        try:
+            analysis = provider_config["function"](request)
 
-        return {
-            "provider": provider_config["provider"],
-            "model": provider_config["model"],
-            "analysis": analysis,
-        }
+            return {
+                "provider": provider_config["provider"],
+                "model": provider_config["model"],
+                "success": True,
+                "analysis": analysis,
+            }
+
+        except Exception as e:
+            return {
+                "provider": provider_config["provider"],
+                "model": provider_config["model"],
+                "success": False,
+                "error": str(e),
+            }
 
     with ThreadPoolExecutor(max_workers=3) as executor:
         results = list(executor.map(run_provider, providers))
@@ -232,6 +242,18 @@ Rules:
 - Estimate the new match score after all proposed resume changes are implemented.
 - The estimated new match score should be an integer from 0 to 100.
 
+First determine the role intent.
+
+Then determine how the current resume is positioned.
+
+Then identify the positioning gap.
+
+Then identify the minimum changes required to close that gap.
+
+Only then rewrite the resume.
+
+Let's also please try and not make this look AI generated.
+
 Use this exact JSON shape:
 {{
   "overall_summary": "short summary of the combined model opinions",
@@ -250,7 +272,8 @@ Use this exact JSON shape:
       "action": "specific action the user should take"
     }}
   ],
-  "new_resume_text": "full rewritten resume text"
+  "new_resume_text": "full rewritten resume text",
+  "cover_letter": "cover letter"
 }}
 
 Average original match score:
