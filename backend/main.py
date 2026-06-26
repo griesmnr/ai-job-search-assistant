@@ -220,8 +220,6 @@ def synthesize(request: SynthesizeRequest, x_app_secret: Optional[str] = Header(
         average_original_match_score,
     )
 
-    print(prompt)
-
     try:
         response = openai_client.chat.completions.create(
             model=openai_model,
