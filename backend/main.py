@@ -35,6 +35,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def load_prompt_template(filename: str) -> str:
+    prompt_path = os.path.join(
+        os.path.dirname(__file__),
+        "prompts",
+        filename
+    )
+
+    with open(prompt_path, "r", encoding="utf-8") as file:
+        return file.read()
+
 
 class AnalyzeRequest(BaseModel):
     resume_text: str
@@ -83,46 +93,12 @@ def calculate_average_match_score(results: list[dict]) -> int:
 
 
 def build_analysis_prompt(resume_text: str, job_description: str) -> str:
-    return f"""
-You are an ATS-focused resume optimization assistant.
+    template = load_prompt_template("analysis_prompt.txt")
 
-Goal:
-Help the user look like a strong matching candidate for this specific job description.
-
-Return valid JSON only.
-No markdown.
-No explanation outside the JSON.
-
-Rules:
-- Focus on top-of-funnel resume matching.
-- Prefer exact language from the job description when identifying keywords.
-- Do not invent experience the resume does not support.
-- Rank missing keywords by importance.
-- Keep recommendations truthful and grounded in the resume.
-- For each bullet suggestion, begin with the most appropriate resume section in brackets.
-- Provide a brief match score explanation in 2-4 sentences.
-- The explanation should mention the strongest matches, the most important missing qualifications, and any significant strengths or gaps.
-
-Use this exact JSON shape:
-{{
-  "match_score": 87,
-  "match_score_explanation": "brief explanation",
-  "missing_keywords": [
-    {{"priority": 1, "keyword": "keyword 1", "why_it_matters": "short reason"}},
-    {{"priority": 2, "keyword": "keyword 2", "why_it_matters": "short reason"}}
-  ],
-  "bullet_suggestions": [
-    "[Healthfirst] Truthful rewritten bullet 1",
-    "[Professional Summary] Truthful rewritten bullet 2"
-  ]
-}}
-
-Resume:
-{resume_text}
-
-Job description:
-{job_description}
-"""
+    return template.format(
+        resume_text=resume_text,
+        job_description=job_description,
+    )
 
 
 def analyze_with_openai(request: AnalyzeRequest):
@@ -140,6 +116,7 @@ def analyze_with_openai(request: AnalyzeRequest):
 
 def analyze_with_claude(request: AnalyzeRequest):
     prompt = build_analysis_prompt(request.resume_text, request.job_description)
+    
 
     response = anthropic_client.messages.create(
         model=anthropic_model,
@@ -218,88 +195,14 @@ def build_synthesis_prompt(
     job_description: str,
     average_original_match_score: int,
 ) -> str:
-    return f"""
-You are synthesizing resume optimization analyses from multiple AI providers.
+    template = load_prompt_template("synthesis_prompt.txt")
 
-Goal:
-Create a practical, truthful, minimally changed tailored resume for this specific job application.
-
-Return valid JSON only.
-No markdown.
-No explanation outside the JSON.
-
-Inputs:
-- Original resume
-- Job description
-- Analyses from multiple AI providers
-- Average original match score
-
-Rules:
-- Focus on practical resume changes.
-- Identify meaningful model differences.
-- Recommend concrete next steps.
-- Do not invent experience.
-- Keep recommendations truthful and grounded in the original resume and model analyses.
-- Prefer changes that multiple models agree on.
-- Preserve the existing resume structure.
-- Preserve section order.
-- Preserve line breaks between sections.
-- Preserve the formatting style of the original resume.
-- If the original resume uses plain lines without bullet characters, do not introduce bullet characters.
-- Do not add bullets, numbering, or symbols that do not already exist.
-- Prefer modifying existing lines over replacing entire sections.
-- Make the smallest changes necessary to improve alignment with the job description.
-- Do not rewrite sections that already match well.
-- Return the full rewritten resume as a single string field called "new_resume_text".
-- Estimate the new match score after all proposed resume changes are implemented.
-- The estimated new match score should be an integer from 0 to 100.
-
-First determine the role intent.
-
-Then determine how the current resume is positioned.
-
-Then identify the positioning gap.
-
-Then identify the minimum changes required to close that gap.
-
-Only then rewrite the resume.
-
-Let's also please try and not make this look AI generated.
-
-Use this exact JSON shape:
-{{
-  "overall_summary": "short summary of the combined model opinions",
-  "average_original_match_score": {average_original_match_score},
-  "estimated_new_match_score": 92,
-  "estimated_new_match_score_explanation": "brief explanation of why the new score is estimated this way",
-  "notable_model_differences": [
-    {{
-      "topic": "topic",
-      "difference": "short explanation"
-    }}
-  ],
-  "recommended_next_steps": [
-    {{
-      "priority": 1,
-      "action": "specific action the user should take"
-    }}
-  ],
-  "new_resume_text": "full rewritten resume text",
-  "cover_letter": "cover letter"
-}}
-
-Average original match score:
-{average_original_match_score}
-
-Model analyses:
-{json.dumps(results, indent=2)}
-
-Original resume:
-{original_resume_text}
-
-Job description:
-{job_description}
-"""
+    return template.format(
+        results_json=json.dumps(results, indent=2),
+        original_resume_text=original_resume_text,
+        job_description=job_description,
+        average_original_match_score=average_original_match_score,
+    )
 
 
 @app.post("/synthesize")
@@ -309,12 +212,15 @@ def synthesize(request: SynthesizeRequest, x_app_secret: Optional[str] = Header(
     
     average_original_match_score = calculate_average_match_score(request.results)
 
+    results_json = json.dumps(request.results, indent=2)
     prompt = build_synthesis_prompt(
-        request.results,
+        results_json,
         request.originalResumeText,
         request.job_description,
         average_original_match_score,
     )
+
+    print(prompt)
 
     try:
         response = openai_client.chat.completions.create(
