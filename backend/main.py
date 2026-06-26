@@ -18,7 +18,7 @@ load_dotenv(".env.local", override=True)
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 genai_client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
-APP_ACCESS_SECRET = os.getenv("VITE_APP_ACCESS_SECRET")
+APP_ACCESS_SECRET = os.getenv("APP_ACCESS_SECRET")
 
 openai_model = "gpt-4.1-mini"
 anthropic_model = "claude-haiku-4-5-20251001"
