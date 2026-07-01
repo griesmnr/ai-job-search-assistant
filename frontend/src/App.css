@@ -335,3 +335,56 @@ button {
   color: #d9534f;
   font-weight: bold;
 }
+
+.app-tabs {
+  display: flex;
+  gap: 0.75rem;
+  margin: 1rem 0 2rem;
+  border-bottom: 1px solid #444;
+}
+
+.tab {
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+}
+
+.active-tab {
+  border-bottom-color: currentColor;
+  font-weight: 700;
+}
+
+.app-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0;
+}
+
+.tab {
+  padding: 0.75rem 1.5rem;
+  background: #2b2b2b;
+  border: 1px solid #555;
+  border-bottom: none;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  color: #bbb;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tab:hover {
+  background: #353535;
+}
+
+.active-tab {
+  background: #1e1e1e;
+  color: white;
+  font-weight: 600;
+  position: relative;
+  top: 1px;
+}

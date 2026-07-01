@@ -21,7 +21,7 @@ function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [resumeError, setResumeError] = useState("");
   const [jobDescriptionError, setJobDescriptionError] = useState("");
-  
+  const [activeTab, setActiveTab] = useState("tailor");
 
   const diffParts = synthResults?.new_resume_text
     ? diffLines(resumeText, synthResults.new_resume_text)
@@ -256,274 +256,304 @@ function App() {
         )}
       </header>
 
-      <form className="analyze-form">
-        <label className="field">
-          <span className="field-label">
-            Resume Text <span className="required">*</span>
-          </span>
-
-          <textarea
-            value={resumeText}
-            className={resumeError ? "input-error" : ""}
-            onChange={(e) => {
-              setResumeText(e.target.value);
-              setResumeError("");
-            }}
-          />
-
-          {resumeError && (
-            <p className="field-error">{resumeError}</p>
-          )}
-        </label>
-
-        <label className="field">
-          <span className="field-label">
-            Job Description <span className="required">*</span>
-          </span>
-          <textarea
-            value={jobDescription}
-            className={jobDescriptionError ? "input-error" : ""}
-            onChange={(e) => {
-              setJobDescription(e.target.value);
-              setJobDescriptionError("");
-            }}
-          />
-
-          {jobDescriptionError && (
-            <p className="field-error">{jobDescriptionError}</p>
-          )}
-        </label>
-
+      <nav className="app-tabs">
         <button
-          onClick={handleTailorClick}
           type="button"
-          disabled={isTailoring}
+          className={activeTab === "tailor" ? "tab active-tab" : "tab"}
+          onClick={() => setActiveTab("tailor")}
         >
-          {isTailoring ? "Tailoring..." : "Tailor My Resume"}
+          Tailor Resume
         </button>
 
-        {isTailoring && (
-          <div className="spinner-container">
-            <div className="spinner"></div>
+        <button
+          type="button"
+          className={activeTab === "history" ? "tab active-tab" : "tab"}
+          onClick={() => setActiveTab("history")}
+        >
+          History
+        </button>
+      </nav>
 
-            <span>
-              {loadingMessages[loadingMessageIndex]}
-            </span>
-          </div>
-        )}
-      </form>
-
-      {synthResults && (
-        <section className="score-summary">
-          <div className="score-card-large">
-            <h2>Current Resume Job Match Score</h2>
-            <p>{synthResults.average_original_match_score}%</p>
-          </div>
-
-          <div className="score-card-large">
-            <h2>New Resume Job Match Score</h2>
-            <p>{synthResults.estimated_new_match_score}%</p>
-          </div>
-        </section>
-      )}
-
-      {results && synthResults && (
-        <section className="more-info-section">
-          <button
-            className="collapse-toggle"
-            onClick={() => setMoreInfoExpanded(!moreInfoExpanded)}
-          >
-            {moreInfoExpanded ? "▼ Less Information" : "▶ More Information"}
-          </button>
-
-          {moreInfoExpanded && (
-            <>
-              <section className="synthesis-results">
-                <h2>What is happening?</h2>
-                <p>3 different AI models were consulted to get information on how well your resume
-                  matches for this job. Below explains some of the key takeaways from all 3 models, 
-                  and then a breakdown of each model's opinion more granularly.
-                </p>
-                <br/>
-
-                <h2>Model Differences</h2>
-                <ul>
-                  {synthResults.notable_model_differences.map((item) => (
-                    <li key={item.topic}>
-                      <strong>{item.topic}</strong>: {item.difference}
-                    </li>
-                  ))}
-                </ul>
-
-                <h2>Recommended Next Steps</h2>
-                <ol>
-                  {synthResults.recommended_next_steps.map((step) => (
-                    <li key={step.priority}>{step.action}</li>
-                  ))}
-                </ol>
-
-                {synthResults.estimated_new_match_score_explanation && (
-                  <>
-                    <h2>New Score Explanation</h2>
-                    <p>{synthResults.estimated_new_match_score_explanation}</p>
-                  </>
-                )}
-              </section>
-
-              <section className="comparison-table">
-                <div className="comparison-corner"></div>
-
-                {results
-                  .map((result) => (
-                  <div className="comparison-column-header" key={result.provider}>
-                    <h3>{result.provider}</h3>
-                    <p>{result.model}</p>
-                  </div>
-                ))}
-
-                <div className="comparison-row-label">Match Score</div>
-
-                {results.map((result) => (
-                  <section
-                    className={`provider-card score-card ${result.success ? "" : "provider-error-card"}`}
-                    key={`${result.provider}-score`}
-                  >
-                    {result.success ? (
-                      <>
-                        <p className="match-score-number">
-                          {result.analysis.match_score}%
-                        </p>
-
-                        <h4>Explanation</h4>
-                        <p>{result.analysis.match_score_explanation}</p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="provider-unavailable">Unavailable</p>
-                        <h4>Provider Error</h4>
-                        <p>
-                          {result.provider} could not complete this analysis. The resume was tailored using the available models.
-                        </p>
-                      </>
-                    )}
-                  </section>
-                ))}
-
-                <div className="comparison-row-label">Missing Keywords</div>
-
-                {results.map((result) => (
-                  <section
-                    className={`provider-card ${result.success ? "" : "provider-error-card"}`}
-                    key={`${result.provider}-keywords`}
-                  >
-                    {result.success ? (
-                      <ul>
-                        {result.analysis.missing_keywords.map((keyword) => (
-                          <li
-                            key={`${result.provider}-${keyword.priority}-${keyword.keyword}`}
-                          >
-                            Priority: {keyword.priority} keyword: {keyword.keyword}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <>
-                        <p className="provider-unavailable">Unavailable</p>
-                        <p>
-                          Missing keywords are unavailable because {result.provider} could not complete this analysis.
-                        </p>
-                      </>
-                    )}
-                  </section>
-                ))}
-              </section>
-            </>
-          )}
-        </section>
-      )}
-
-      {synthResults && (
+      {activeTab === "tailor" && (
         <>
-        <h2>Proposed Resume Changes for your Review:</h2>
-        <section className="diff-controls">
-          <button onClick={approveAllChanges}>
-            Approve All Changes
+          <form className="analyze-form">
+          <label className="field">
+            <span className="field-label">
+              Resume Text <span className="required">*</span>
+            </span>
+
+            <textarea
+              value={resumeText}
+              className={resumeError ? "input-error" : ""}
+              onChange={(e) => {
+                setResumeText(e.target.value);
+                setResumeError("");
+              }}
+            />
+
+            {resumeError && (
+              <p className="field-error">{resumeError}</p>
+            )}
+          </label>
+
+          <label className="field">
+            <span className="field-label">
+              Job Description <span className="required">*</span>
+            </span>
+            <textarea
+              value={jobDescription}
+              className={jobDescriptionError ? "input-error" : ""}
+              onChange={(e) => {
+                setJobDescription(e.target.value);
+                setJobDescriptionError("");
+              }}
+            />
+
+            {jobDescriptionError && (
+              <p className="field-error">{jobDescriptionError}</p>
+            )}
+          </label>
+
+          <button
+            onClick={handleTailorClick}
+            type="button"
+            disabled={isTailoring}
+          >
+            {isTailoring ? "Tailoring..." : "Tailor My Resume"}
           </button>
-        </section>
-          <section className="diff-viewer">
-            
-            {diffParts.map((part, index) => {
-              const className = part.added
-                ? "diff-added"
-                : part.removed
-                ? "diff-removed"
-                : "diff-unchanged";
 
-              return (
-                <div className="diff-row" key={index}>
-                  <div className={`diff-content ${className}`}>
-                    <pre>{part.value}</pre>
-                  </div>
+          {isTailoring && (
+            <div className="spinner-container">
+              <div className="spinner"></div>
 
-                  <div className="diff-actions">
-                    {(part.added || part.removed) && (
-                      <>
-                        <button
-                          className={
-                            changeDecisions[index] === "approved"
-                              ? "decision-button selected-approve"
-                              : "decision-button"
-                          }
-                          onClick={() => setDecision(index, "approved")}
-                        >
-                          Approve
-                        </button>
-
-                        <button
-                          className={
-                            changeDecisions[index] === "rejected"
-                              ? "decision-button selected-reject"
-                              : "decision-button"
-                          }
-                          onClick={() => setDecision(index, "rejected")}
-                        >
-                          Reject
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </section>
-
-          {allChangesReviewed ? (
-            <section className="final-resume">
-              <h2>Final Resume</h2>
-
-              <textarea
-                className="final-resume-output"
-                value={finalResumeText}
-                readOnly
-              />
-
-              <textarea
-                className="cover-letter-output"
-                value={synthResults.cover_letter}
-                readOnly
-              />
-            </section>
-          ) : (
-            <section className="final-resume">
-              <h2>Final Resume</h2>
-
-              <p>
-                Review all proposed changes before generating the final resume.
-              </p>
-            </section>
+              <span>
+                {loadingMessages[loadingMessageIndex]}
+              </span>
+            </div>
           )}
+        </form>
+
+        {synthResults && (
+          <section className="score-summary">
+            <div className="score-card-large">
+              <h2>Current Resume Job Match Score</h2>
+              <p>{synthResults.average_original_match_score}%</p>
+            </div>
+
+            <div className="score-card-large">
+              <h2>New Resume Job Match Score</h2>
+              <p>{synthResults.estimated_new_match_score}%</p>
+            </div>
+          </section>
+        )}
+
+        {results && synthResults && (
+          <section className="more-info-section">
+            <button
+              className="collapse-toggle"
+              onClick={() => setMoreInfoExpanded(!moreInfoExpanded)}
+            >
+              {moreInfoExpanded ? "▼ Less Information" : "▶ More Information"}
+            </button>
+
+            {moreInfoExpanded && (
+              <>
+                <section className="synthesis-results">
+                  <h2>What is happening?</h2>
+                  <p>3 different AI models were consulted to get information on how well your resume
+                    matches for this job. Below explains some of the key takeaways from all 3 models, 
+                    and then a breakdown of each model's opinion more granularly.
+                  </p>
+                  <br/>
+
+                  <h2>Model Differences</h2>
+                  <ul>
+                    {synthResults.notable_model_differences.map((item) => (
+                      <li key={item.topic}>
+                        <strong>{item.topic}</strong>: {item.difference}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <h2>Recommended Next Steps</h2>
+                  <ol>
+                    {synthResults.recommended_next_steps.map((step) => (
+                      <li key={step.priority}>{step.action}</li>
+                    ))}
+                  </ol>
+
+                  {synthResults.estimated_new_match_score_explanation && (
+                    <>
+                      <h2>New Score Explanation</h2>
+                      <p>{synthResults.estimated_new_match_score_explanation}</p>
+                    </>
+                  )}
+                </section>
+
+                <section className="comparison-table">
+                  <div className="comparison-corner"></div>
+
+                  {results
+                    .map((result) => (
+                    <div className="comparison-column-header" key={result.provider}>
+                      <h3>{result.provider}</h3>
+                      <p>{result.model}</p>
+                    </div>
+                  ))}
+
+                  <div className="comparison-row-label">Match Score</div>
+
+                  {results.map((result) => (
+                    <section
+                      className={`provider-card score-card ${result.success ? "" : "provider-error-card"}`}
+                      key={`${result.provider}-score`}
+                    >
+                      {result.success ? (
+                        <>
+                          <p className="match-score-number">
+                            {result.analysis.match_score}%
+                          </p>
+
+                          <h4>Explanation</h4>
+                          <p>{result.analysis.match_score_explanation}</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="provider-unavailable">Unavailable</p>
+                          <h4>Provider Error</h4>
+                          <p>
+                            {result.provider} could not complete this analysis. The resume was tailored using the available models.
+                          </p>
+                        </>
+                      )}
+                    </section>
+                  ))}
+
+                  <div className="comparison-row-label">Missing Keywords</div>
+
+                  {results.map((result) => (
+                    <section
+                      className={`provider-card ${result.success ? "" : "provider-error-card"}`}
+                      key={`${result.provider}-keywords`}
+                    >
+                      {result.success ? (
+                        <ul>
+                          {result.analysis.missing_keywords.map((keyword) => (
+                            <li
+                              key={`${result.provider}-${keyword.priority}-${keyword.keyword}`}
+                            >
+                              Priority: {keyword.priority} keyword: {keyword.keyword}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <>
+                          <p className="provider-unavailable">Unavailable</p>
+                          <p>
+                            Missing keywords are unavailable because {result.provider} could not complete this analysis.
+                          </p>
+                        </>
+                      )}
+                    </section>
+                  ))}
+                </section>
+              </>
+            )}
+          </section>
+        )}
+
+        {synthResults && (
+          <>
+          <h2>Proposed Resume Changes for your Review:</h2>
+          <section className="diff-controls">
+            <button onClick={approveAllChanges}>
+              Approve All Changes
+            </button>
+          </section>
+            <section className="diff-viewer">
+              
+              {diffParts.map((part, index) => {
+                const className = part.added
+                  ? "diff-added"
+                  : part.removed
+                  ? "diff-removed"
+                  : "diff-unchanged";
+
+                return (
+                  <div className="diff-row" key={index}>
+                    <div className={`diff-content ${className}`}>
+                      <pre>{part.value}</pre>
+                    </div>
+
+                    <div className="diff-actions">
+                      {(part.added || part.removed) && (
+                        <>
+                          <button
+                            className={
+                              changeDecisions[index] === "approved"
+                                ? "decision-button selected-approve"
+                                : "decision-button"
+                            }
+                            onClick={() => setDecision(index, "approved")}
+                          >
+                            Approve
+                          </button>
+
+                          <button
+                            className={
+                              changeDecisions[index] === "rejected"
+                                ? "decision-button selected-reject"
+                                : "decision-button"
+                            }
+                            onClick={() => setDecision(index, "rejected")}
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
+
+            {allChangesReviewed ? (
+              <section className="final-resume">
+                <h2>Final Resume</h2>
+
+                <textarea
+                  className="final-resume-output"
+                  value={finalResumeText}
+                  readOnly
+                />
+
+                <textarea
+                  className="cover-letter-output"
+                  value={synthResults.cover_letter}
+                  readOnly
+                />
+              </section>
+            ) : (
+              <section className="final-resume">
+                <h2>Final Resume</h2>
+
+                <p>
+                  Review all proposed changes before generating the final resume.
+                </p>
+              </section>
+            )}
+          </>
+        )}
         </>
       )}
+
+      {activeTab === "history" && (
+        <section className="history-page">
+          <h2>History</h2>
+          <p>Your previous tailored resumes will appear here.</p>
+        </section>
+      )}
+
       {showLoginModal && (
         <LoginModal onClose={() => setShowLoginModal(false)} 
           onBeforeSignIn={saveDraftBeforeLogin}
