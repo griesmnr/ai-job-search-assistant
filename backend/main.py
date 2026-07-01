@@ -63,11 +63,16 @@ class SynthesizeRequest(BaseModel):
     originalResumeText: str
     job_description: str
 
-def create_tailor_resume_execution(request: AnalyzeRequest):
+def create_tailor_resume_execution(request: AnalyzeRequest, results: list[dict]):
+    
+    metadata = get_execution_metadata(results)
+
     response = supabase.table("tailor_resume_executions").insert({
         "user_id": request.user_id,
         "job_description": request.job_description,
         "user_resume": request.resume_text,
+        "company_name": metadata["company_name"],
+        "job_title": metadata["job_title"],
     }).execute()
 
     return response.data[0]["id"]
@@ -158,6 +163,27 @@ def save_synthesis_result(execution_id: str, provider_name: str, model_name: str
         }).execute()
 
     return synthesis_result_id
+
+def get_execution_metadata(results: list[dict]) -> dict:
+    for result in results:
+        analysis = result.get("analysis")
+
+        if not analysis:
+            continue
+
+        company_name = analysis.get("company_name")
+        job_title = analysis.get("job_title")
+
+        if company_name or job_title:
+            return {
+                "company_name": company_name,
+                "job_title": job_title,
+            }
+
+    return {
+        "company_name": None,
+        "job_title": None,
+    }
 
 def validate_secret(app_secret: Optional[str]):
     if app_secret != APP_ACCESS_SECRET:
@@ -286,7 +312,7 @@ def analyze(request: AnalyzeRequest, x_app_secret: Optional[str] = Header(defaul
     with ThreadPoolExecutor(max_workers=3) as executor:
         results = list(executor.map(run_provider, providers))
 
-    execution_id = create_tailor_resume_execution(request)
+    execution_id = create_tailor_resume_execution(request, results)
 
     for result in results:
         save_analysis_result(execution_id, result)

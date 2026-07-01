@@ -1,0 +1,1 @@
+delete from tailor_resume_executions;

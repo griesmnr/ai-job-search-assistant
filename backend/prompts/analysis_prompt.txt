@@ -19,6 +19,8 @@ Rules:
 
 Use this exact JSON shape:
 {{
+  "company_name": "company name as best you can extract it",
+  "job_title": "job title as best you can extract it",
   "match_score": 87,
   "match_score_explanation": "brief explanation",
   "missing_keywords": [

@@ -3,6 +3,7 @@ import "./App.css";
 import { diffLines } from "diff";
 import { supabase } from "./supabase";
 import LoginModal from "./LoginModal";
+import HistoryPage from "./HistoryPage";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;
@@ -548,12 +549,9 @@ function App() {
         )}
         </>
       )}
-
+      
       {activeTab === "history" && (
-        <section className="history-page">
-          <h2>History</h2>
-          <p>Your previous tailored resumes will appear here.</p>
-        </section>
+        <HistoryPage session={session} />
       )}
 
       {showLoginModal && (
