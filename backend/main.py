@@ -10,10 +10,16 @@ from concurrent.futures import ThreadPoolExecutor
 import os
 import json
 from fastapi import Header
+from supabase import create_client
+
+load_dotenv(".env.local", override=True)
 
 SYNTHESIS_PROVIDER = "openai"
 
-load_dotenv(".env.local", override=True)
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
@@ -49,13 +55,65 @@ def load_prompt_template(filename: str) -> str:
 class AnalyzeRequest(BaseModel):
     resume_text: str = Field(min_length=1)
     job_description: str = Field(min_length=1)
-
+    user_id: str
 
 class SynthesizeRequest(BaseModel):
     results: list[dict]
     originalResumeText: str
     job_description: str
 
+def create_tailor_resume_execution(request: AnalyzeRequest):
+    response = supabase.table("tailor_resume_executions").insert({
+        "user_id": request.user_id,
+        "job_description": request.job_description,
+        "user_resume": request.resume_text,
+    }).execute()
+
+    return response.data[0]["id"]
+
+def save_analysis_result(execution_id: str, provider_result: dict):
+    model_response = (
+        supabase
+        .table("ai_models")
+        .select("id, ai_providers!inner(provider_name)")
+        .eq("model_name", provider_result["model"])
+        .eq("ai_providers.provider_name", provider_result["provider"])
+        .single()
+        .execute()
+    )
+
+    ai_model_id = model_response.data["id"]
+
+    analysis = provider_result.get("analysis")
+
+    response = supabase.table("analysis_results").insert({
+        "tailor_resume_execution_id": execution_id,
+        "ai_model_id": ai_model_id,
+        "success": provider_result["success"],
+        "error_message": provider_result.get("error"),
+        "match_score": analysis.get("match_score") if analysis else None,
+        "match_score_explanation": analysis.get("match_score_explanation") if analysis else None,
+        "raw_response_json": analysis if analysis else None,
+    }).execute()
+
+    analysis_result_id = response.data[0]["id"]
+
+    if not analysis:
+        return
+
+    for keyword in analysis.get("missing_keywords", []):
+        supabase.table("missing_keywords").insert({
+            "analysis_result_id": analysis_result_id,
+            "priority": keyword.get("priority"),
+            "keyword": keyword.get("keyword"),
+            "why_it_matters": keyword.get("why_it_matters"),
+        }).execute()
+
+    for suggestion in analysis.get("bullet_suggestions", []):
+        supabase.table("bullet_suggestions").insert({
+            "analysis_result_id": analysis_result_id,
+            "suggestion": suggestion,
+        }).execute()
 
 def validate_secret(app_secret: Optional[str]):
     if app_secret != APP_ACCESS_SECRET:
@@ -184,7 +242,13 @@ def analyze(request: AnalyzeRequest, x_app_secret: Optional[str] = Header(defaul
     with ThreadPoolExecutor(max_workers=3) as executor:
         results = list(executor.map(run_provider, providers))
 
+    execution_id = create_tailor_resume_execution(request)
+
+    for result in results:
+        save_analysis_result(execution_id, result)
+        
     return {
+        "execution_id": execution_id,
         "results": results
     }
 

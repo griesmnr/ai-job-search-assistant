@@ -209,6 +209,7 @@ function App() {
         body: JSON.stringify({
           resume_text: resumeText,
           job_description: jobDescription,
+          user_id: session.user.id,
         }),
       });
 
