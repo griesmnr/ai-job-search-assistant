@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from openai import OpenAI
 from anthropic import Anthropic
@@ -47,8 +47,8 @@ def load_prompt_template(filename: str) -> str:
 
 
 class AnalyzeRequest(BaseModel):
-    resume_text: str
-    job_description: str
+    resume_text: str = Field(min_length=1)
+    job_description: str = Field(min_length=1)
 
 
 class SynthesizeRequest(BaseModel):

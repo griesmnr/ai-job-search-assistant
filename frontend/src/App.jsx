@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 import { diffLines } from "diff";
+import { supabase } from "./supabase";
+import LoginModal from "./LoginModal";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;
@@ -14,13 +16,34 @@ function App() {
   const [moreInfoExpanded, setMoreInfoExpanded] = useState(false);
   const [isTailoring, setIsTailoring] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [resumeError, setResumeError] = useState("");
+  const [jobDescriptionError, setJobDescriptionError] = useState("");
   
 
   const diffParts = synthResults?.new_resume_text
     ? diffLines(resumeText, synthResults.new_resume_text)
     : [];
 
+  const DRAFT_STORAGE_KEY = "resume-tailor-draft";
+
+  function saveDraftBeforeLogin() {
+    localStorage.setItem(
+      DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        resumeText,
+        jobDescription,
+      })
+    );
+  }
+
   const finalResumeText = buildFinalResume(diffParts, changeDecisions);
+
+  const userFirstName =
+    session?.user?.user_metadata?.full_name?.split(" ")[0] ||
+    session?.user?.email?.split("@")[0];
 
   function setDecision(index, decision) {
     setChangeDecisions({
@@ -80,6 +103,44 @@ function App() {
     return () => clearInterval(interval);
   }, [isTailoring]);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setShowLoginModal(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+
+    if (!savedDraft) {
+      return;
+    }
+
+    try {
+      const parsedDraft = JSON.parse(savedDraft);
+
+      if (parsedDraft.resumeText) {
+        setResumeText(parsedDraft.resumeText);
+      }
+
+      if (parsedDraft.jobDescription) {
+        setJobDescription(parsedDraft.jobDescription);
+      }
+    } catch {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+    }
+  }, []);
+
   function buildFinalResume(diffParts, changeDecisions) {
     return diffParts
       .map((part, index) => {
@@ -100,6 +161,35 @@ function App() {
         return "";
       })
       .join("");
+  }
+
+  function handleTailorClick() {
+    let hasErrors = false;
+
+    setResumeError("");
+    setJobDescriptionError("");
+
+    if (!resumeText.trim()) {
+      setResumeError("Please paste your resume.");
+      hasErrors = true;
+    }
+
+    if (!jobDescription.trim()) {
+      setJobDescriptionError("Please paste a job description.");
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
+      return;
+    }
+
+    if (!session) {
+      saveDraftBeforeLogin();
+      setShowLoginModal(true);
+      return;
+    }
+
+    tailorResume();
   }
 
   async function tailorResume() {
@@ -140,6 +230,7 @@ function App() {
 
       const synthesizeData = await synthesizeResponse.json();
       setSynthResults(synthesizeData);
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
     } finally {
       setIsTailoring(false);
     }
@@ -147,26 +238,67 @@ function App() {
 
   return (
     <main>
-      <h1>AI Job Search Assistant</h1>
+      <header className="app-header">
+        <h1>AI Job Search Assistant</h1>
+
+        {session && (
+          <div className="user-menu">
+            <span>{userFirstName}</span>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={() => supabase.auth.signOut()}
+            >
+              Log Out
+            </button>
+          </div>
+        )}
+      </header>
 
       <form className="analyze-form">
         <label className="field">
-          Resume Text
+          <span className="field-label">
+            Resume Text <span className="required">*</span>
+          </span>
+
           <textarea
             value={resumeText}
-            onChange={(e) => setResumeText(e.target.value)}
+            className={resumeError ? "input-error" : ""}
+            onChange={(e) => {
+              setResumeText(e.target.value);
+              setResumeError("");
+            }}
           />
+
+          {resumeError && (
+            <p className="field-error">{resumeError}</p>
+          )}
         </label>
 
         <label className="field">
-          Job Description
+          <span className="field-label">
+            Job Description <span className="required">*</span>
+          </span>
           <textarea
             value={jobDescription}
-            onChange={(e) => setJobDescription(e.target.value)}
+            className={jobDescriptionError ? "input-error" : ""}
+            onChange={(e) => {
+              setJobDescription(e.target.value);
+              setJobDescriptionError("");
+            }}
           />
+
+          {jobDescriptionError && (
+            <p className="field-error">{jobDescriptionError}</p>
+          )}
         </label>
 
-        <button onClick={tailorResume} type="button" disabled={isTailoring}>
+        <button
+          onClick={handleTailorClick}
+          type="button"
+          disabled={isTailoring}
+        >
           {isTailoring ? "Tailoring..." : "Tailor My Resume"}
         </button>
 
@@ -392,8 +524,14 @@ function App() {
           )}
         </>
       )}
+      {showLoginModal && (
+        <LoginModal onClose={() => setShowLoginModal(false)} 
+          onBeforeSignIn={saveDraftBeforeLogin}
+          />
+      )}
     </main>
   );
+  
 }
 
 export default App;
