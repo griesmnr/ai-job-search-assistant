@@ -226,6 +226,7 @@ function App() {
           results: analyzeData.results,
           originalResumeText: resumeText,
           job_description: jobDescription,
+          execution_id: analyzeData.execution_id
         }),
       });
 

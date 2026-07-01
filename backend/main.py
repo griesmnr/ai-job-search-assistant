@@ -58,6 +58,7 @@ class AnalyzeRequest(BaseModel):
     user_id: str
 
 class SynthesizeRequest(BaseModel):
+    execution_id: str
     results: list[dict]
     originalResumeText: str
     job_description: str
@@ -114,6 +115,49 @@ def save_analysis_result(execution_id: str, provider_result: dict):
             "analysis_result_id": analysis_result_id,
             "suggestion": suggestion,
         }).execute()
+
+def save_synthesis_result(execution_id: str, provider_name: str, model_name: str, synthesis: dict):
+    model_response = (
+        supabase
+        .table("ai_models")
+        .select("id, ai_providers!inner(provider_name)")
+        .eq("model_name", model_name)
+        .eq("ai_providers.provider_name", provider_name)
+        .single()
+        .execute()
+    )
+
+    ai_model_id = model_response.data["id"]
+
+    response = supabase.table("synthesis_results").insert({
+        "tailor_resume_execution_id": execution_id,
+        "ai_model_id": ai_model_id,
+        "overall_summary": synthesis.get("overall_summary"),
+        "average_original_match_score": synthesis.get("average_original_match_score"),
+        "estimated_new_match_score": synthesis.get("estimated_new_match_score"),
+        "estimated_new_match_score_explanation": synthesis.get("estimated_new_match_score_explanation"),
+        "new_proposed_resume": synthesis.get("new_resume_text"),
+        "cover_letter": synthesis.get("cover_letter"),
+        "raw_response_json": synthesis,
+    }).execute()
+
+    synthesis_result_id = response.data[0]["id"]
+
+    for item in synthesis.get("notable_model_differences", []):
+        supabase.table("notable_model_differences").insert({
+            "synthesis_result_id": synthesis_result_id,
+            "topic": item.get("topic"),
+            "difference": item.get("difference"),
+        }).execute()
+
+    for step in synthesis.get("recommended_next_steps", []):
+        supabase.table("recommended_next_steps").insert({
+            "synthesis_result_id": synthesis_result_id,
+            "priority": step.get("priority"),
+            "action": step.get("action"),
+        }).execute()
+
+    return synthesis_result_id
 
 def validate_secret(app_secret: Optional[str]):
     if app_secret != APP_ACCESS_SECRET:
@@ -295,6 +339,15 @@ def synthesize(request: SynthesizeRequest, x_app_secret: Optional[str] = Header(
         parsed = json.loads(clean_json_response(content))
 
         parsed["average_original_match_score"] = average_original_match_score
+
+        synthesis_id = save_synthesis_result(
+            request.execution_id,
+            SYNTHESIS_PROVIDER,
+            openai_model,
+            parsed,
+        )
+
+        parsed["synthesis_id"] = synthesis_id
 
         return parsed
 
