@@ -9,6 +9,7 @@ import AppTabs from "./components/AppTabs";
 import ScoreSummary from "./components/ScoreSummary";
 import TailorForm from "./components/TailorForm";
 import MoreInfoSection from "./components/MoreInfoSection";
+import TailorResumePage from "./pages/TailorResumePage";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;
@@ -251,8 +252,7 @@ function App() {
       <AppTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {activeTab === "tailor" && (
-        <>
-        <TailorForm
+        <TailorResumePage
           resumeText={resumeText}
           setResumeText={setResumeText}
           resumeError={resumeError}
@@ -264,100 +264,17 @@ function App() {
           handleTailorClick={handleTailorClick}
           isTailoring={isTailoring}
           loadingMessage={loadingMessages[loadingMessageIndex]}
-        />
-
-        <ScoreSummary synthResults={synthResults} />
-
-        <MoreInfoSection
-          results={results}
           synthResults={synthResults}
+          results={results}
           moreInfoExpanded={moreInfoExpanded}
           setMoreInfoExpanded={setMoreInfoExpanded}
+          approveAllChanges={approveAllChanges}
+          diffParts={diffParts}
+          changeDecisions={changeDecisions}
+          setDecision={setDecision}
+          allChangesReviewed={allChangesReviewed}
+          finalResumeText={finalResumeText}
         />
-
-        {synthResults && (
-          <>
-          <h2>Proposed Resume Changes for your Review:</h2>
-          <section className="diff-controls">
-            <button onClick={approveAllChanges}>
-              Approve All Changes
-            </button>
-          </section>
-            <section className="diff-viewer">
-              
-              {diffParts.map((part, index) => {
-                const className = part.added
-                  ? "diff-added"
-                  : part.removed
-                  ? "diff-removed"
-                  : "diff-unchanged";
-
-                return (
-                  <div className="diff-row" key={index}>
-                    <div className={`diff-content ${className}`}>
-                      <pre>{part.value}</pre>
-                    </div>
-
-                    <div className="diff-actions">
-                      {(part.added || part.removed) && (
-                        <>
-                          <button
-                            className={
-                              changeDecisions[index] === "approved"
-                                ? "decision-button selected-approve"
-                                : "decision-button"
-                            }
-                            onClick={() => setDecision(index, "approved")}
-                          >
-                            Approve
-                          </button>
-
-                          <button
-                            className={
-                              changeDecisions[index] === "rejected"
-                                ? "decision-button selected-reject"
-                                : "decision-button"
-                            }
-                            onClick={() => setDecision(index, "rejected")}
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </section>
-
-            {allChangesReviewed ? (
-              <section className="final-resume">
-                <h2>Final Resume</h2>
-
-                <textarea
-                  className="final-resume-output"
-                  value={finalResumeText}
-                  readOnly
-                />
-
-                <textarea
-                  className="cover-letter-output"
-                  value={synthResults.cover_letter}
-                  readOnly
-                />
-              </section>
-            ) : (
-              <section className="final-resume">
-                <h2>Final Resume</h2>
-
-                <p>
-                  Review all proposed changes before generating the final resume.
-                </p>
-              </section>
-            )}
-          </>
-        )}
-        </>
       )}
       
       {activeTab === "history" && (
