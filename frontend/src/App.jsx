@@ -6,6 +6,8 @@ import LoginModal from "./components/LoginModal";
 import HistoryPage from "./components/HistoryPage";
 import AppHeader from "./components/AppHeader";
 import AppTabs from "./components/AppTabs";
+import LoadingSpinner from "./components/LoadingSpinner";
+import ScoreSummary from "./components/ScoreSummary";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;
@@ -296,29 +298,11 @@ function App() {
           </button>
 
           {isTailoring && (
-            <div className="spinner-container">
-              <div className="spinner"></div>
-
-              <span>
-                {loadingMessages[loadingMessageIndex]}
-              </span>
-            </div>
+            <LoadingSpinner message={loadingMessages[loadingMessageIndex]} />
           )}
         </form>
 
-        {synthResults && (
-          <section className="score-summary">
-            <div className="score-card-large">
-              <h2>Current Resume Job Match Score</h2>
-              <p>{synthResults.average_original_match_score}%</p>
-            </div>
-
-            <div className="score-card-large">
-              <h2>New Resume Job Match Score</h2>
-              <p>{synthResults.estimated_new_match_score}%</p>
-            </div>
-          </section>
-        )}
+        <ScoreSummary synthResults={synthResults} />
 
         {results && synthResults && (
           <section className="more-info-section">
