@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabase } from "../supabase";
 
 export default function LoginModal({ onClose, onBeforeSignIn }) {
   async function signInWithGoogle() {

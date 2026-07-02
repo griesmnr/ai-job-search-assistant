@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import "./App.css";
 import { diffLines } from "diff";
 import { supabase } from "./supabase";
-import LoginModal from "./LoginModal";
-import HistoryPage from "./HistoryPage";
+import LoginModal from "./components/LoginModal";
+import HistoryPage from "./components/HistoryPage";
+import AppHeader from "./components/AppHeader";
+import AppTabs from "./components/AppTabs";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;
@@ -241,41 +243,9 @@ function App() {
 
   return (
     <main>
-      <header className="app-header">
-        <h1>AI Job Search Assistant</h1>
+      <AppHeader session={session} />
 
-        {session && (
-          <div className="user-menu">
-            <span>{userFirstName}</span>
-
-            <button
-              type="button"
-              className="logout-button"
-              onClick={() => supabase.auth.signOut()}
-            >
-              Log Out
-            </button>
-          </div>
-        )}
-      </header>
-
-      <nav className="app-tabs">
-        <button
-          type="button"
-          className={activeTab === "tailor" ? "tab active-tab" : "tab"}
-          onClick={() => setActiveTab("tailor")}
-        >
-          Tailor Resume
-        </button>
-
-        <button
-          type="button"
-          className={activeTab === "history" ? "tab active-tab" : "tab"}
-          onClick={() => setActiveTab("history")}
-        >
-          History
-        </button>
-      </nav>
+      <AppTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {activeTab === "tailor" && (
         <>
