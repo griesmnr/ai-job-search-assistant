@@ -6,8 +6,8 @@ import LoginModal from "./components/LoginModal";
 import HistoryPage from "./components/HistoryPage";
 import AppHeader from "./components/AppHeader";
 import AppTabs from "./components/AppTabs";
-import LoadingSpinner from "./components/LoadingSpinner";
 import ScoreSummary from "./components/ScoreSummary";
+import TailorForm from "./components/TailorForm";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;
@@ -251,56 +251,19 @@ function App() {
 
       {activeTab === "tailor" && (
         <>
-          <form className="analyze-form">
-          <label className="field">
-            <span className="field-label">
-              Resume Text <span className="required">*</span>
-            </span>
-
-            <textarea
-              value={resumeText}
-              className={resumeError ? "input-error" : ""}
-              onChange={(e) => {
-                setResumeText(e.target.value);
-                setResumeError("");
-              }}
-            />
-
-            {resumeError && (
-              <p className="field-error">{resumeError}</p>
-            )}
-          </label>
-
-          <label className="field">
-            <span className="field-label">
-              Job Description <span className="required">*</span>
-            </span>
-            <textarea
-              value={jobDescription}
-              className={jobDescriptionError ? "input-error" : ""}
-              onChange={(e) => {
-                setJobDescription(e.target.value);
-                setJobDescriptionError("");
-              }}
-            />
-
-            {jobDescriptionError && (
-              <p className="field-error">{jobDescriptionError}</p>
-            )}
-          </label>
-
-          <button
-            onClick={handleTailorClick}
-            type="button"
-            disabled={isTailoring}
-          >
-            {isTailoring ? "Tailoring..." : "Tailor My Resume"}
-          </button>
-
-          {isTailoring && (
-            <LoadingSpinner message={loadingMessages[loadingMessageIndex]} />
-          )}
-        </form>
+        <TailorForm
+          resumeText={resumeText}
+          setResumeText={setResumeText}
+          resumeError={resumeError}
+          setResumeError={setResumeError}
+          jobDescription={jobDescription}
+          setJobDescription={setJobDescription}
+          jobDescriptionError={jobDescriptionError}
+          setJobDescriptionError={setJobDescriptionError}
+          handleTailorClick={handleTailorClick}
+          isTailoring={isTailoring}
+          loadingMessage={loadingMessages[loadingMessageIndex]}
+        />
 
         <ScoreSummary synthResults={synthResults} />
 
