@@ -6,9 +6,6 @@ import LoginModal from "./components/LoginModal";
 import HistoryPage from "./components/HistoryPage";
 import AppHeader from "./components/AppHeader";
 import AppTabs from "./components/AppTabs";
-import ScoreSummary from "./components/ScoreSummary";
-import TailorForm from "./components/TailorForm";
-import MoreInfoSection from "./components/MoreInfoSection";
 import TailorResumePage from "./pages/TailorResumePage";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;

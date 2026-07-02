@@ -1,10 +1,14 @@
 export default function FinalResume({
+  synthResults,
   allChangesReviewed,
   finalResumeText,
-  coverLetter,
 }) {
-  if (allChangesReviewed) {
-    return (
+  if (!synthResults || !allChangesReviewed) {
+    return null;
+  }
+
+  return (
+    <>
       <section className="final-resume">
         <h2>Final Resume</h2>
 
@@ -13,23 +17,17 @@ export default function FinalResume({
           value={finalResumeText}
           readOnly
         />
+      </section>
+
+      <section className="final-resume">
+        <h2>Cover Letter</h2>
 
         <textarea
           className="cover-letter-output"
-          value={coverLetter}
+          value={synthResults.cover_letter}
           readOnly
         />
       </section>
-    );
-  }
-
-  return (
-    <section className="final-resume">
-      <h2>Final Resume</h2>
-
-      <p>
-        Review all proposed changes before generating the final resume.
-      </p>
-    </section>
+    </>
   );
 }

@@ -61,11 +61,11 @@ export default function TailorResumePage({
     />
 
     
-    <FinalResume
-      allChangesReviewed={allChangesReviewed}
-      finalResumeText={finalResumeText}
-      coverLetter={synthResults?.cover_letter}
-    />
+      <FinalResume
+        synthResults={synthResults}
+        allChangesReviewed={allChangesReviewed}
+        finalResumeText={finalResumeText}
+      />
     </>
   );
 }
