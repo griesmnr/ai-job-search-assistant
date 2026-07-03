@@ -3,10 +3,11 @@ import "./App.css";
 import { diffLines } from "diff";
 import { supabase } from "./supabase";
 import LoginModal from "./components/LoginModal";
-import HistoryPage from "./components/HistoryPage";
+import HistoryPage from "./pages/HistoryPage";
 import AppHeader from "./components/AppHeader";
 import AppTabs from "./components/AppTabs";
 import TailorResumePage from "./pages/TailorResumePage";
+import BrushUpsPage from "./pages/BrushUpsPage";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;
@@ -276,6 +277,10 @@ function App() {
       
       {activeTab === "history" && (
         <HistoryPage session={session} />
+      )}
+
+      {activeTab === "brushups" && (
+        <BrushUpsPage session={session} />
       )}
 
       {showLoginModal && (

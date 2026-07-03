@@ -18,6 +18,14 @@ export default function AppTabs({ activeTab, setActiveTab }) {
       >
         History
       </button>
+
+      <button
+        type="button"
+        className={activeTab === "brushups" ? "tab active-tab" : "tab"}
+        onClick={() => setActiveTab("brushups")}
+      >
+        Brush Ups
+      </button>
     </nav>
   );
 }
