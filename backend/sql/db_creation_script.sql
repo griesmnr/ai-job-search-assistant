@@ -15,6 +15,7 @@ create table tailor_resume_executions (
   user_id uuid not null,
   job_description text not null,
   user_resume text not null,
+  is_active boolean not null default true,
   final_chosen_resume text,
   created_at timestamptz not null default now()
 );

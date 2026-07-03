@@ -1,7 +1,33 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabase";
 
+
+
 export default function HistoryPage({ session }) {
+
+  async function toggleExecutionStatus(execution) {
+    const nextIsActive = !execution.is_active;
+
+    const { error } = await supabase
+      .from("tailor_resume_executions")
+      .update({ is_active: nextIsActive })
+      .eq("id", execution.id)
+      .eq("user_id", session.user.id);
+
+    if (error) {
+      console.error("Status update error:", error);
+      return;
+    }
+
+    setExecutions((currentExecutions) =>
+      currentExecutions.map((item) =>
+        item.id === execution.id
+          ? { ...item, is_active: nextIsActive }
+          : item
+      )
+    );
+  }
+  
   const [executions, setExecutions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -16,6 +42,7 @@ export default function HistoryPage({ session }) {
           created_at,
           company_name,
           job_title,
+          is_active,
           synthesis_results (
             estimated_new_match_score,
             average_original_match_score,
@@ -78,6 +105,16 @@ export default function HistoryPage({ session }) {
                   <strong>Applied:</strong>{" "}
                   {new Date(execution.created_at).toLocaleDateString()}
                 </p>
+
+                <button
+                  type="button"
+                  className={`status-toggle ${
+                    execution.is_active ? "status-active" : "status-inactive"
+                  }`}
+                  onClick={() => toggleExecutionStatus(execution)}
+                >
+                  {execution.is_active ? "Active" : "Inactive"}
+                </button>
             </div>
 
             <div className="history-brushups">

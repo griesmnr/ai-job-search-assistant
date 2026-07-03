@@ -467,3 +467,19 @@ button {
   margin: 0;
   padding-left: 1.25rem;
 }
+
+.status-toggle {
+  border: 1px solid #555;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.status-active {
+  font-weight: 700;
+}
+
+.status-inactive {
+  opacity: 0.65;
+}
