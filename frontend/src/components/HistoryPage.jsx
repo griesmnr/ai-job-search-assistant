@@ -16,13 +16,15 @@ export default function HistoryPage({ session }) {
           created_at,
           company_name,
           job_title,
-          user_resume,
-          final_chosen_resume,
           synthesis_results (
             estimated_new_match_score,
             average_original_match_score,
             cover_letter,
-            new_proposed_resume
+            new_proposed_resume,
+            synthesis_brush_up_topics (
+              topic,
+              priority
+            )
           )
         `)
         .eq("user_id", session.user.id)
@@ -60,6 +62,7 @@ export default function HistoryPage({ session }) {
 
         const originalScore = synthesis?.average_original_match_score;
         const newScore = synthesis?.estimated_new_match_score;
+        const brushUps = synthesis?.synthesis_brush_up_topics ?? [];
 
         return (
             <article className="history-card" key={execution.id}>
@@ -72,14 +75,19 @@ export default function HistoryPage({ session }) {
                 </div>
 
                 <p className="history-date">
-                {new Date(execution.created_at).toLocaleDateString()}
+                  <strong>Applied:</strong>{" "}
+                  {new Date(execution.created_at).toLocaleDateString()}
                 </p>
             </div>
 
-            <div className="history-score">
-                <span>{originalScore ?? "N/A"}%</span>
-                <span className="score-arrow">→</span>
-                <span>{newScore ?? "N/A"}%</span>
+            <div className="history-brushups">
+              <span className="history-label">Brush-up Topics</span>
+
+              <ul className="brushup-list">
+                {brushUps.map((topic) => (
+                  <li key={topic.topic}>{topic.topic}</li>
+                ))}
+              </ul>
             </div>
             </article>
         );

@@ -13,6 +13,7 @@ Inputs:
 - Analyses from multiple AI providers
 - Average original match score
 
+
 Rules:
 - Focus on practical resume changes.
 - Identify meaningful model differences.
@@ -45,6 +46,8 @@ Only then rewrite the resume.
 
 Let's also please try and not make this look AI generated.
 
+Synthesize the brush-up topics from all model analyses into a concise prioritized list. Deduplicate overlapping topics and prefer topics that are important for interview readiness, not merely resume keyword matching.
+
 Use this exact JSON shape:
 {{
   "overall_summary": "short summary of the combined model opinions",
@@ -61,6 +64,13 @@ Use this exact JSON shape:
     {{
       "priority": 1,
       "action": "specific action the user should take"
+    }}
+  ],
+  "synthesized_brush_up_topics": [
+    {{
+      "priority": 1,
+      "topic": "Kubernetes",
+      "why_it_matters": "Multiple models identified this as important, and it appears relevant to the role's technical expectations."
     }}
   ],
   "new_resume_text": "full rewritten resume text",

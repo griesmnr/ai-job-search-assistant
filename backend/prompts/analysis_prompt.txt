@@ -16,6 +16,7 @@ Rules:
 - For each bullet suggestion, begin with the most appropriate resume section in brackets.
 - Provide a brief match score explanation in 2-4 sentences.
 - The explanation should mention the strongest matches, the most important missing qualifications, and any significant strengths or gaps.
+- Also identify interview brush-up topics based primarily on the job description and secondarily on the resume. These should be topics the candidate should review before an interview, whether or not the resume needs to be changed.
 
 Use this exact JSON shape:
 {{
@@ -30,6 +31,13 @@ Use this exact JSON shape:
   "bullet_suggestions": [
     "[Healthfirst] Truthful rewritten bullet 1",
     "[Professional Summary] Truthful rewritten bullet 2"
+  ],
+  "brush_up_topics": [
+    {{
+      "priority": 1,
+      "topic": "Kubernetes",
+      "why_it_matters": "This appears in the job description and is likely to come up in technical interviews."
+    }}
   ]
 }}
 

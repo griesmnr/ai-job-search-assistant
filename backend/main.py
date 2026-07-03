@@ -121,6 +121,14 @@ def save_analysis_result(execution_id: str, provider_result: dict):
             "suggestion": suggestion,
         }).execute()
 
+    for brushup_topic in analysis.get("brush_up_topics", []):
+        supabase.table("analysis_brush_up_topics").insert({
+            "analysis_result_id": analysis_result_id,
+            "priority": brushup_topic.get("priority"),
+            "topic" : brushup_topic.get("topic"),
+            "why_it_matters": brushup_topic.get("why_it_matters"),
+        }).execute()
+
 def save_synthesis_result(execution_id: str, provider_name: str, model_name: str, synthesis: dict):
     model_response = (
         supabase
@@ -160,6 +168,14 @@ def save_synthesis_result(execution_id: str, provider_name: str, model_name: str
             "synthesis_result_id": synthesis_result_id,
             "priority": step.get("priority"),
             "action": step.get("action"),
+        }).execute()
+
+    for brushup_topic in synthesis.get("synthesized_brush_up_topics", []):
+        supabase.table("synthesis_brush_up_topics").insert({
+            "synthesis_result_id": synthesis_result_id,
+            "priority": brushup_topic.get("priority"),
+            "topic" : brushup_topic.get("topic"),
+            "why_it_matters": brushup_topic.get("why_it_matters"),
         }).execute()
 
     return synthesis_result_id
