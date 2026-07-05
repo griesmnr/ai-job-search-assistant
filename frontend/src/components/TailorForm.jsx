@@ -22,6 +22,7 @@ export default function TailorForm({
 
         <textarea
           value={resumeText}
+          placeholder="Paste your current resume here..."
           className={resumeError ? "input-error" : ""}
           onChange={(e) => {
             setResumeText(e.target.value);
@@ -34,11 +35,12 @@ export default function TailorForm({
 
       <label className="field">
         <span className="field-label">
-          Job Description <span className="required">*</span>
+          Job Posting <span className="required">*</span>
         </span>
 
         <textarea
           value={jobDescription}
+          placeholder="Paste the job description from LinkedIn, Indeed, or the company’s careers page..."
           className={jobDescriptionError ? "input-error" : ""}
           onChange={(e) => {
             setJobDescription(e.target.value);
@@ -56,7 +58,7 @@ export default function TailorForm({
         type="button"
         disabled={isTailoring}
       >
-        {isTailoring ? "Tailoring..." : "Tailor My Resume"}
+        {isTailoring ? "Optimizing..." : "Optimize My Resume"}
       </button>
 
       {isTailoring && <LoadingSpinner message={loadingMessage} />}

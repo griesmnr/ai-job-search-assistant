@@ -8,7 +8,7 @@ export default function AppHeader({ session }) {
 
   return (
     <header className="app-header">
-      <h1>AI Job Search Assistant</h1>
+      <h1>Resume Optimizer</h1>
 
       {session && (
         <div className="user-menu">

@@ -8,7 +8,7 @@ export default function AppTabs({ activeTab, setActiveTab }) {
         className={activeTab === "tailor" ? "tab active-tab" : "tab"}
         onClick={() => setActiveTab("tailor")}
       >
-        Tailor Resume
+        Optimize a Resume
       </button>
 
       <button
