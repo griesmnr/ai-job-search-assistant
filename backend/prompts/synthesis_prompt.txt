@@ -46,7 +46,17 @@ Only then rewrite the resume.
 
 Let's also please try and not make this look AI generated.
 
-Synthesize the brush-up topics from all model analyses into a concise prioritized list. Deduplicate overlapping topics and prefer topics that are important for interview readiness, not merely resume keyword matching.
+Deduplicate and canonicalize brush up topics across all models. For example: 
+
+OpenAI:
+Distributed Systems Design
+Claude:
+Distributed Systems
+Gemini:
+Distributed Systems & Reliability
+↓
+Synthesis:
+Distributed Systems
 
 Use this exact JSON shape:
 {{

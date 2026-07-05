@@ -17,6 +17,14 @@ Rules:
 - Provide a brief match score explanation in 2-4 sentences.
 - The explanation should mention the strongest matches, the most important missing qualifications, and any significant strengths or gaps.
 - Also identify interview brush-up topics based primarily on the job description and secondarily on the resume. These should be topics the candidate should review before an interview, whether or not the resume needs to be changed.
+- However, these need to be canonical skill names. They will later be consolidated with others like it, so they need to be as canonical as possible.
+Some examples:
+Distributed Systems
+Kafka
+Spring Boot
+AWS
+Agile
+GraphQL
 
 Use this exact JSON shape:
 {{
