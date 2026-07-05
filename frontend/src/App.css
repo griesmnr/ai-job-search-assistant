@@ -505,3 +505,48 @@ button {
 .brushup-reason {
   opacity: 0.8;
 }
+.side-by-side-diff {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 1rem;
+  align-items: start;
+  margin: 1rem 0;
+}
+
+.diff-column,
+.unchanged-row {
+  border-radius: 8px;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.diff-column pre,
+.unchanged-row pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: inherit;
+  color: #666;
+}
+
+.unchanged-row {
+  background: white;
+}
+
+.old-version {
+  background: #fdeaea;
+}
+
+.new-version {
+  background: #eaf8ea;
+}
+
+.diff-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: .5rem;
+}
+
+.full-width {
+    grid-column: 1 / span 2;
+}

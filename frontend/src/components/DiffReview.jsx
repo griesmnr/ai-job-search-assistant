@@ -1,6 +1,6 @@
 export default function DiffReview({
   synthResults,
-  diffParts,
+  diffGroups,
   changeDecisions,
   setDecision,
   approveAllChanges,
@@ -14,51 +14,53 @@ export default function DiffReview({
       <h2>Proposed Resume Changes for your Review:</h2>
 
       <section className="diff-controls">
-        <button onClick={approveAllChanges}>
-          Approve All Changes
-        </button>
+        <button onClick={approveAllChanges}>Approve All Changes</button>
       </section>
 
       <section className="diff-viewer">
-        {diffParts.map((part, index) => {
-          const className = part.added
-            ? "diff-added"
-            : part.removed
-            ? "diff-removed"
-            : "diff-unchanged";
+        {diffGroups.map((group, index) => {
+          if (group.type === "unchanged") {
+            return (
+              <div className="diff-row unchanged-row" key={index}>
+                <pre>{group.value}</pre>
+              </div>
+            );
+          }
+
+          const decision = changeDecisions[index];
 
           return (
-            <div className="diff-row" key={index}>
-              <div className={`diff-content ${className}`}>
-                <pre>{part.value}</pre>
+            <div className="diff-row side-by-side-diff" key={index}>
+              <div className="diff-column old-version">
+                <pre>{group.removed || ""}</pre>
+              </div>
+
+              <div className="diff-column new-version">
+                <pre>{group.added || ""}</pre>
               </div>
 
               <div className="diff-actions">
-                {(part.added || part.removed) && (
-                  <>
-                    <button
-                      className={
-                        changeDecisions[index] === "approved"
-                          ? "decision-button selected-approve"
-                          : "decision-button"
-                      }
-                      onClick={() => setDecision(index, "approved")}
-                    >
-                      Approve
-                    </button>
+                <button
+                  className={
+                    decision === "approved"
+                      ? "decision-button selected-approve"
+                      : "decision-button"
+                  }
+                  onClick={() => setDecision(index, "approved")}
+                >
+                  Approve
+                </button>
 
-                    <button
-                      className={
-                        changeDecisions[index] === "rejected"
-                          ? "decision-button selected-reject"
-                          : "decision-button"
-                      }
-                      onClick={() => setDecision(index, "rejected")}
-                    >
-                      Reject
-                    </button>
-                  </>
-                )}
+                <button
+                  className={
+                    decision === "rejected"
+                      ? "decision-button selected-reject"
+                      : "decision-button"
+                  }
+                  onClick={() => setDecision(index, "rejected")}
+                >
+                  Reject
+                </button>
               </div>
             </div>
           );

@@ -27,10 +27,11 @@ function App() {
   const [resumeError, setResumeError] = useState("");
   const [jobDescriptionError, setJobDescriptionError] = useState("");
   const [activeTab, setActiveTab] = useState("tailor");
-
   const diffParts = synthResults?.new_resume_text
     ? diffLines(resumeText, synthResults.new_resume_text)
     : [];
+  
+  const diffGroups = buildDiffGroups(diffParts);
 
   const DRAFT_STORAGE_KEY = "resume-tailor-draft";
 
@@ -44,7 +45,7 @@ function App() {
     );
   }
 
-  const finalResumeText = buildFinalResume(diffParts, changeDecisions);
+  const finalResumeText = buildFinalResume(diffGroups, changeDecisions);
 
   const userFirstName =
     session?.user?.user_metadata?.full_name?.split(" ")[0] ||
@@ -60,8 +61,8 @@ function App() {
   function approveAllChanges() {
     const approvals = { ...changeDecisions };
 
-    diffParts.forEach((part, index) => {
-      if (part.added || part.removed) {
+    diffGroups.forEach((group, index) => {
+      if (group.type !== "unchanged") {
         approvals[index] = "approved";
       }
     });
@@ -69,8 +70,49 @@ function App() {
     setChangeDecisions(approvals);
   }
 
-  const unresolvedChanges = diffParts.some((part, index) => {
-    if (!part.added && !part.removed) {
+  function buildDiffGroups(diffParts) {
+    const groups = [];
+
+    for (let i = 0; i < diffParts.length; i++) {
+      const current = diffParts[i];
+      const next = diffParts[i + 1];
+
+      if (current.removed && next?.added) {
+        groups.push({
+          type: "replacement",
+          removed: current.value,
+          added: next.value,
+          partIndexes: [i, i + 1],
+        });
+        i++;
+      } else if (current.added) {
+        groups.push({
+          type: "addition",
+          added: current.value,
+          removed: "",
+          partIndexes: [i],
+        });
+      } else if (current.removed) {
+        groups.push({
+          type: "deletion",
+          removed: current.value,
+          added: "",
+          partIndexes: [i],
+        });
+      } else {
+        groups.push({
+          type: "unchanged",
+          value: current.value,
+          partIndexes: [i],
+        });
+      }
+    }
+
+  return groups;
+}
+
+  const unresolvedChanges = diffGroups.some((group, index) => {
+    if (group.type === "unchanged") {
       return false;
     }
 
@@ -146,21 +188,25 @@ function App() {
     }
   }, []);
 
-  function buildFinalResume(diffParts, changeDecisions) {
-    return diffParts
-      .map((part, index) => {
+function buildFinalResume(diffGroups, changeDecisions) {
+    return diffGroups
+      .map((group, index) => {
         const decision = changeDecisions[index];
 
-        if (!part.added && !part.removed) {
-          return part.value;
+        if (group.type === "unchanged") {
+          return group.value;
         }
 
-        if (part.added) {
-          return decision === "approved" ? part.value : "";
+        if (group.type === "replacement") {
+          return decision === "approved" ? group.added : group.removed;
         }
 
-        if (part.removed) {
-          return decision === "rejected" ? part.value : "";
+        if (group.type === "addition") {
+          return decision === "approved" ? group.added : "";
+        }
+
+        if (group.type === "deletion") {
+          return decision === "approved" ? "" : group.removed;
         }
 
         return "";
@@ -267,7 +313,7 @@ function App() {
           moreInfoExpanded={moreInfoExpanded}
           setMoreInfoExpanded={setMoreInfoExpanded}
           approveAllChanges={approveAllChanges}
-          diffParts={diffParts}
+          diffGroups={diffGroups}
           changeDecisions={changeDecisions}
           setDecision={setDecision}
           allChangesReviewed={allChangesReviewed}

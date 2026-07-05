@@ -21,7 +21,7 @@ export default function TailorResumePage({
   moreInfoExpanded,
   setMoreInfoExpanded,
   approveAllChanges,
-  diffParts,
+  diffGroups,
   changeDecisions,
   setDecision,
   allChangesReviewed,
@@ -52,13 +52,13 @@ export default function TailorResumePage({
         setMoreInfoExpanded={setMoreInfoExpanded}
       />
 
-    <DiffReview
+      <DiffReview
         synthResults={synthResults}
-        diffParts={diffParts}
+        diffGroups={diffGroups}
         changeDecisions={changeDecisions}
         setDecision={setDecision}
         approveAllChanges={approveAllChanges}
-    />
+      />
 
     
       <FinalResume
