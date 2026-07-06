@@ -11,6 +11,7 @@ import os
 import json
 from fastapi import Header
 from supabase import create_client
+import traceback
 
 load_dotenv(".env.local", override=True)
 
@@ -62,6 +63,38 @@ class SynthesizeRequest(BaseModel):
     results: list[dict]
     originalResumeText: str
     job_description: str
+
+def get_canonical_brush_up_topic_id(topic: str):
+    normalized_topic = topic.strip().lower()
+
+    if not normalized_topic:
+        return None
+
+    canonical_response = (
+        supabase
+        .table("canonical_brush_up_topics")
+        .select("id")
+        .eq("canonical_key", normalized_topic)
+        .limit(1)
+        .execute()
+    )
+
+    if canonical_response.data:
+        return canonical_response.data[0]["id"]
+
+    alias_response = (
+        supabase
+        .table("brush_up_topic_aliases")
+        .select("canonical_brush_up_topic_id")
+        .eq("alias", normalized_topic)
+        .limit(1)
+        .execute()
+    )
+
+    if alias_response.data:
+        return alias_response.data[0]["canonical_brush_up_topic_id"]
+
+    return None
 
 def create_tailor_resume_execution(request: AnalyzeRequest, results: list[dict]):
     
@@ -122,8 +155,13 @@ def save_analysis_result(execution_id: str, provider_result: dict):
         }).execute()
 
     for brushup_topic in analysis.get("brush_up_topics", []):
+        canonical_topic_id = get_canonical_brush_up_topic_id(
+            brushup_topic.get("topic", "")
+        )
+
         supabase.table("analysis_brush_up_topics").insert({
             "analysis_result_id": analysis_result_id,
+            "canonical_brush_up_topic_id": canonical_topic_id,
             "priority": brushup_topic.get("priority"),
             "topic" : brushup_topic.get("topic"),
             "why_it_matters": brushup_topic.get("why_it_matters"),
@@ -173,8 +211,11 @@ def save_synthesis_result(execution_id: str, provider_name: str, model_name: str
     for brushup_topic in synthesis.get("synthesized_brush_up_topics", []):
         supabase.table("synthesis_brush_up_topics").insert({
             "synthesis_result_id": synthesis_result_id,
+            "topic": brushup_topic.get("topic"),
+            "canonical_brush_up_topic_id": get_canonical_brush_up_topic_id(
+                brushup_topic.get("topic", "")
+            ),
             "priority": brushup_topic.get("priority"),
-            "topic" : brushup_topic.get("topic"),
             "why_it_matters": brushup_topic.get("why_it_matters"),
         }).execute()
 
@@ -400,6 +441,7 @@ def synthesize(request: SynthesizeRequest, x_app_secret: Optional[str] = Header(
         )
 
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"Synthesis request failed: {str(e)}",

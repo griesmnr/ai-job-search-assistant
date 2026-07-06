@@ -9,23 +9,29 @@ export default function BrushUpsPage({ session }) {
     async function loadBrushUps() {
       setIsLoading(true);
 
-      const { data, error } = await supabase
-        .from("tailor_resume_executions")
-        .select(`
-          id,
-          company_name,
-          job_title,
-          is_active,
-          synthesis_results (
-            synthesis_brush_up_topics (
-              topic,
-              priority,
-              why_it_matters
+    const { data, error } = await supabase
+      .from("tailor_resume_executions")
+      .select(`
+        id,
+        company_name,
+        job_title,
+        is_active,
+        synthesis_results (
+          synthesis_brush_up_topics (
+            topic,
+            priority,
+            why_it_matters,
+            canonical_brush_up_topics (
+              id,
+              canonical_key,
+              display_name,
+              category
             )
           )
-        `)
-        .eq("user_id", session.user.id)
-        .eq("is_active", true);
+        )
+      `)
+      .eq("user_id", session.user.id)
+      .eq("is_active", true);
 
       if (error) {
         console.error("Brush ups load error:", error);
@@ -40,17 +46,25 @@ export default function BrushUpsPage({ session }) {
         const topics = synthesis?.synthesis_brush_up_topics ?? [];
 
         topics.forEach((brushUp) => {
-          const normalizedTopic = brushUp.topic.trim();
+          const canonicalTopic = brushUp.canonical_brush_up_topics;
 
-          if (!normalizedTopic) {
+          const displayTopic =
+            canonicalTopic?.display_name ??
+            brushUp.topic;
+
+          if (!displayTopic?.trim()) {
             return;
           }
 
-          const key = normalizedTopic.toLowerCase();
+          const key =
+            canonicalTopic?.canonical_key ??
+            displayTopic.trim().toLowerCase();
 
           if (!topicMap.has(key)) {
             topicMap.set(key, {
-              topic: normalizedTopic,
+              topic: displayTopic,
+              canonicalKey: key,
+              category: canonicalTopic?.category,
               count: 0,
               bestPriority: brushUp.priority ?? 999,
               whyItMatters: brushUp.why_it_matters,
@@ -60,6 +74,7 @@ export default function BrushUpsPage({ session }) {
           const existing = topicMap.get(key);
 
           existing.count += 1;
+
           existing.bestPriority = Math.min(
             existing.bestPriority,
             brushUp.priority ?? 999
@@ -110,7 +125,7 @@ export default function BrushUpsPage({ session }) {
 
       <div className="brushups-list">
         {brushUps.map((brushUp) => (
-          <article className="brushup-card" key={brushUp.topic}>
+          <article className="brushup-card" key={brushUp.canonicalKey}>
             <div>
               <h3>{brushUp.topic}</h3>
 

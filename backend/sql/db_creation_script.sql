@@ -15,6 +15,8 @@ create table tailor_resume_executions (
   user_id uuid not null,
   job_description text not null,
   user_resume text not null,
+  company_name text not null,
+  job_title text not null,
   is_active boolean not null default true,
   final_chosen_resume text,
   created_at timestamptz not null default now()
@@ -46,9 +48,17 @@ create table bullet_suggestions (
   suggestion text not null
 );
 
+create table canonical_brush_up_topics (
+  id uuid primary key default gen_random_uuid(),
+  canonical_key text not null unique,
+  display_name text not null,
+  category text
+);
+
 create table analysis_brush_up_topics (
   id uuid primary key default gen_random_uuid(),
   analysis_result_id uuid not null references analysis_results(id) on delete cascade,
+  canonical_brush_up_topic_id uuid references canonical_brush_up_topics(id),
   priority int,
   topic text not null,
   why_it_matters text
@@ -85,7 +95,15 @@ create table recommended_next_steps (
 create table synthesis_brush_up_topics (
   id uuid primary key default gen_random_uuid(),
   synthesis_result_id uuid not null references synthesis_results(id) on delete cascade,
-  priority int,
+  canonical_brush_up_topic_id uuid references canonical_brush_up_topics(id),
   topic text not null,
+  priority int,
   why_it_matters text
+);
+
+
+create table brush_up_topic_aliases (
+  id uuid primary key default gen_random_uuid(),
+  canonical_brush_up_topic_id uuid not null references canonical_brush_up_topics(id) on delete cascade,
+  alias text not null unique
 );
