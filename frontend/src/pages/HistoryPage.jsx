@@ -50,7 +50,11 @@ export default function HistoryPage({ session }) {
             new_proposed_resume,
             synthesis_brush_up_topics (
               topic,
-              priority
+              priority,
+              canonical_brush_up_topics (
+                canonical_key,
+                display_name
+              )
             )
           )
         `)
@@ -121,9 +125,17 @@ export default function HistoryPage({ session }) {
               <span className="history-label">Brush-up Topics</span>
 
               <ul className="brushup-list">
-                {brushUps.map((topic) => (
-                  <li key={topic.topic}>{topic.topic}</li>
-                ))}
+                {brushUps.map((brushUp) => {
+                  const displayTopic =
+                    brushUp.canonical_brush_up_topics?.display_name ??
+                    brushUp.topic;
+
+                  const key =
+                    brushUp.canonical_brush_up_topics?.canonical_key ??
+                    brushUp.topic;
+
+                  return <li key={key}>{displayTopic}</li>;
+                })}
               </ul>
             </div>
             </article>

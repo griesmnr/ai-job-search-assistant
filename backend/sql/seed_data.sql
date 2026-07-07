@@ -168,3 +168,115 @@ join canonical_brush_up_topics c
 on conflict (alias) do nothing;
 
 commit;
+
+-- seed_more_brush_up_topics.sql
+
+begin;
+
+insert into canonical_brush_up_topics (canonical_key, display_name, category)
+values
+  ('production support', 'Production Support', 'operations'),
+  ('incident response', 'Incident Response', 'operations'),
+  ('monitoring', 'Monitoring', 'operations'),
+  ('operational excellence', 'Operational Excellence', 'operations'),
+
+  ('data structures and algorithms', 'Data Structures and Algorithms', 'computer science'),
+  ('data structures', 'Data Structures', 'computer science'),
+  ('algorithms', 'Algorithms', 'computer science'),
+
+  ('open source', 'Open Source', 'engineering practices'),
+  ('postgresql', 'PostgreSQL', 'database'),
+
+  ('cloud reliability', 'Cloud Reliability', 'cloud'),
+  ('cloud scalability', 'Cloud Scalability', 'cloud'),
+  ('cloud services', 'Cloud Services', 'cloud')
+on conflict (canonical_key) do nothing;
+
+insert into brush_up_topic_aliases (canonical_brush_up_topic_id, alias)
+select c.id, a.alias
+from (
+  values
+    ('production support', 'production support and on-call operations'),
+    ('production support', 'production support and on call operations'),
+    ('production support', 'on-call production support'),
+    ('production support', 'on call production support'),
+    ('production support', 'on-call operations'),
+    ('production support', 'on call operations'),
+    ('production support', 'production operations'),
+
+    ('incident response', 'incident management'),
+    ('incident response', 'production incident response'),
+    ('incident response', 'incident response and monitoring'),
+
+    ('monitoring', 'system monitoring'),
+    ('monitoring', 'production monitoring'),
+    ('monitoring', 'observability'),
+    ('monitoring', 'logging and monitoring'),
+
+    ('operational excellence', 'ops excellence'),
+    ('operational excellence', 'operational readiness'),
+
+    ('data structures and algorithms', 'data structures and algorithms'),
+    ('data structures and algorithms', 'dsa'),
+    ('data structures and algorithms', 'computer science fundamentals'),
+    ('data structures and algorithms', 'cs fundamentals'),
+
+    ('data structures', 'data structure fundamentals'),
+    ('algorithms', 'algorithm fundamentals'),
+
+    ('open source', 'open-source software development'),
+    ('open source', 'open source software development'),
+    ('open source', 'oss'),
+    ('open source', 'oss development'),
+    ('open source', 'open-source contributions'),
+    ('open source', 'open source contributions'),
+
+    ('postgresql', 'postgres'),
+    ('postgresql', 'postgresql development'),
+    ('postgresql', 'postgres database'),
+
+    ('cloud reliability', 'cloud service reliability'),
+    ('cloud reliability', 'cloud services reliability'),
+    ('cloud reliability', 'reliability of cloud services'),
+
+    ('cloud scalability', 'cloud service scalability'),
+    ('cloud scalability', 'cloud services scalability'),
+    ('cloud scalability', 'scalability of cloud services'),
+
+    ('cloud services', 'cloud service reliability and scalability'),
+    ('cloud services', 'cloud services reliability and scalability'),
+    ('cloud services', 'cloud service performance reliability and scalability')
+) as a(canonical_key, alias)
+join canonical_brush_up_topics c
+  on c.canonical_key = a.canonical_key
+on conflict (alias) do nothing;
+
+commit;
+
+begin;
+
+insert into brush_up_topic_aliases (canonical_brush_up_topic_id, alias)
+select c.id, a.alias
+from (
+  values
+    ('postgresql', 'postgresql internals'),
+    ('postgresql', 'postgres internals'),
+    ('postgresql', 'postgres database internals'),
+    ('postgresql', 'postgresql architecture'),
+    ('postgresql', 'postgres architecture'),
+
+    ('production support', 'production support and on-call practices'),
+    ('production support', 'production support and on call practices'),
+    ('production support', 'production support practices'),
+    ('production support', 'on-call practices'),
+    ('production support', 'on call practices'),
+    ('production support', 'on-call operations'),
+    ('production support', 'on call operations'),
+    ('production support', 'production support and on-call operations'),
+    ('production support', 'production support and on call operations')
+) as a(canonical_key, alias)
+join canonical_brush_up_topics c
+  on c.canonical_key = a.canonical_key
+on conflict (alias) do nothing;
+
+commit;
