@@ -11,16 +11,12 @@ import BrushUpsPage from "./pages/BrushUpsPage";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;
+const DRAFT_STORAGE_KEY = "resume-tailor-draft";
 
 function App() {
   const [results, setResults] = useState(null);
   const [synthResults, setSynthResults] = useState(null);
-  const savedDraft = getSavedDraft();
 
-  const [resumeText, setResumeText] = useState(savedDraft.resumeText || "");
-  const [jobDescription, setJobDescription] = useState(
-    savedDraft.jobDescription || ""
-  );
   const [changeDecisions, setChangeDecisions] = useState({});
   const [moreInfoExpanded, setMoreInfoExpanded] = useState(false);
   const [isTailoring, setIsTailoring] = useState(false);
@@ -31,13 +27,62 @@ function App() {
   const [resumeError, setResumeError] = useState("");
   const [jobDescriptionError, setJobDescriptionError] = useState("");
   const [activeTab, setActiveTab] = useState("tailor");
+  const [draftLoaded, setDraftLoaded] = useState(false);
+
+  function getSavedDraft() {
+    try {
+      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+
+      if (!savedDraft) {
+        return {
+          resumeText: "",
+          jobDescription: "",
+        };
+      }
+
+      return JSON.parse(savedDraft);
+    } catch (error) {
+      console.error("Could not load saved draft:", error);
+      return {
+        resumeText: "",
+        jobDescription: "",
+      };
+    }
+  }
+
+  const [resumeText, setResumeText] = useState(() => {
+    return getSavedDraft().resumeText || "";
+  });
+
+  const [jobDescription, setJobDescription] = useState(() => {
+    return getSavedDraft().jobDescription || "";
+  });
+
+  useEffect(() => {
+    setDraftLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!draftLoaded) {
+      return;
+    }
+
+    localStorage.setItem(
+      DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        resumeText,
+        jobDescription,
+      })
+    );
+  }, [draftLoaded, resumeText, jobDescription]);
+
   const diffParts = synthResults?.new_resume_text
     ? diffLines(resumeText, synthResults.new_resume_text)
     : [];
   
   const diffGroups = buildDiffGroups(diffParts);
 
-  const DRAFT_STORAGE_KEY = "resume-tailor-draft";
+
 
   const finalResumeText = buildFinalResume(diffGroups, changeDecisions);
 
@@ -115,27 +160,7 @@ function App() {
 
   const allChangesReviewed = !unresolvedChanges;
 
-  function getSavedDraft() {
-    try {
-      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
 
-      if (!savedDraft) {
-        return {
-          resumeText: "",
-          jobDescription: "",
-        };
-      }
-
-      return JSON.parse(savedDraft);
-    } catch (error) {
-      console.error("Could not load saved draft:", error);
-
-      return {
-        resumeText: "",
-        jobDescription: "",
-      };
-    }
-  }
 
   useEffect(() => {
     localStorage.setItem(
