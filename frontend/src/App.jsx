@@ -15,8 +15,12 @@ const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;
 function App() {
   const [results, setResults] = useState(null);
   const [synthResults, setSynthResults] = useState(null);
-  const [resumeText, setResumeText] = useState("");
-  const [jobDescription, setJobDescription] = useState("");
+  const savedDraft = getSavedDraft();
+
+  const [resumeText, setResumeText] = useState(savedDraft.resumeText || "");
+  const [jobDescription, setJobDescription] = useState(
+    savedDraft.jobDescription || ""
+  );
   const [changeDecisions, setChangeDecisions] = useState({});
   const [moreInfoExpanded, setMoreInfoExpanded] = useState(false);
   const [isTailoring, setIsTailoring] = useState(false);
@@ -34,16 +38,6 @@ function App() {
   const diffGroups = buildDiffGroups(diffParts);
 
   const DRAFT_STORAGE_KEY = "resume-tailor-draft";
-
-  function saveDraftBeforeLogin() {
-    localStorage.setItem(
-      DRAFT_STORAGE_KEY,
-      JSON.stringify({
-        resumeText,
-        jobDescription,
-      })
-    );
-  }
 
   const finalResumeText = buildFinalResume(diffGroups, changeDecisions);
 
@@ -121,6 +115,38 @@ function App() {
 
   const allChangesReviewed = !unresolvedChanges;
 
+  function getSavedDraft() {
+    try {
+      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+
+      if (!savedDraft) {
+        return {
+          resumeText: "",
+          jobDescription: "",
+        };
+      }
+
+      return JSON.parse(savedDraft);
+    } catch (error) {
+      console.error("Could not load saved draft:", error);
+
+      return {
+        resumeText: "",
+        jobDescription: "",
+      };
+    }
+  }
+
+  useEffect(() => {
+    localStorage.setItem(
+      DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        resumeText,
+        jobDescription,
+      })
+    );
+  }, [resumeText, jobDescription]);
+
   const loadingMessages = [
     "Reading resume...",
     "Reviewing job description...",
@@ -145,7 +171,7 @@ function App() {
 
         return current + 1;
       });
-    }, 1800);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [isTailoring]);
@@ -164,28 +190,6 @@ function App() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-
-    if (!savedDraft) {
-      return;
-    }
-
-    try {
-      const parsedDraft = JSON.parse(savedDraft);
-
-      if (parsedDraft.resumeText) {
-        setResumeText(parsedDraft.resumeText);
-      }
-
-      if (parsedDraft.jobDescription) {
-        setJobDescription(parsedDraft.jobDescription);
-      }
-    } catch {
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
-    }
   }, []);
 
 function buildFinalResume(diffGroups, changeDecisions) {
@@ -283,7 +287,6 @@ function buildFinalResume(diffGroups, changeDecisions) {
 
       const synthesizeData = await synthesizeResponse.json();
       setSynthResults(synthesizeData);
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
     } finally {
       setIsTailoring(false);
     }
@@ -331,7 +334,6 @@ function buildFinalResume(diffGroups, changeDecisions) {
 
       {showLoginModal && (
         <LoginModal onClose={() => setShowLoginModal(false)} 
-          onBeforeSignIn={saveDraftBeforeLogin}
           />
       )}
     </main>
