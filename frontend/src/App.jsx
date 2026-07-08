@@ -264,7 +264,6 @@ function buildFinalResume(diffGroups, changeDecisions) {
     }
 
     if (!session) {
-      saveDraftBeforeLogin();
       setShowLoginModal(true);
       return;
     }
