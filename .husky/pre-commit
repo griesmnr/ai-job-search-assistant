@@ -1,4 +1,5 @@
 #!/bin/sh
 cd frontend
+npm run format
 npm run lint
 npm run test:run

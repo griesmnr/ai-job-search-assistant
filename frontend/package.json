@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint": "eslint .",
     "preview": "vite preview",
     "prepare": "husky",
@@ -32,6 +34,7 @@
     "globals": "^17.6.0",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
+    "prettier": "^3.9.5",
     "vite": "^8.0.12",
     "vitest": "^4.1.10"
   }
