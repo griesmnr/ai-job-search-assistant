@@ -25,7 +25,6 @@ function App() {
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [resumeError, setResumeError] = useState("");
   const [jobDescriptionError, setJobDescriptionError] = useState("");
