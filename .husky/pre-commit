@@ -3,3 +3,11 @@ cd frontend
 npm run format
 npm run lint
 npm run test:run
+
+cd ../backend || exit 1
+
+source .venv/bin/activate
+
+black .
+ruff check .
+pytest
