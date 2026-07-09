@@ -91,8 +91,6 @@ export default function HistoryPage({ session }) {
         {executions.map((execution) => {
         const synthesis = execution.synthesis_results?.[0];
 
-        const originalScore = synthesis?.average_original_match_score;
-        const newScore = synthesis?.estimated_new_match_score;
         const brushUps = synthesis?.synthesis_brush_up_topics ?? [];
 
         return (

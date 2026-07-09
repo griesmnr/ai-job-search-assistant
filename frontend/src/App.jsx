@@ -24,13 +24,10 @@ function App() {
   const [isTailoring, setIsTailoring] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [session, setSession] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [resumeError, setResumeError] = useState("");
   const [jobDescriptionError, setJobDescriptionError] = useState("");
   const [activeTab, setActiveTab] = useState("tailor");
-  const [draftLoaded, setDraftLoaded] = useState(false);
-
   
 
   function getSavedDraft() {
@@ -44,9 +41,15 @@ function App() {
         };
       }
 
-      return JSON.parse(savedDraft);
+      const draft = JSON.parse(savedDraft);
+
+      return {
+        resumeText: draft.resumeText ?? "",
+        jobDescription: draft.jobDescription ?? "",
+      };
     } catch (error) {
       console.error("Could not load saved draft:", error);
+
       return {
         resumeText: "",
         jobDescription: "",
@@ -54,23 +57,15 @@ function App() {
     }
   }
 
-  const [resumeText, setResumeText] = useState(() => {
-    return getSavedDraft().resumeText || "";
-  });
+  const savedDraft = getSavedDraft(); 
 
-  const [jobDescription, setJobDescription] = useState(() => {
-    return getSavedDraft().jobDescription || "";
-  });
+  const [resumeText, setResumeText] = useState(savedDraft.resumeText);
 
-  useEffect(() => {
-    setDraftLoaded(true);
-  }, []);
+  const [jobDescription, setJobDescription] = useState(
+    savedDraft.jobDescription
+  );
 
   useEffect(() => {
-    if (!draftLoaded) {
-      return;
-    }
-
     localStorage.setItem(
       DRAFT_STORAGE_KEY,
       JSON.stringify({
@@ -78,7 +73,7 @@ function App() {
         jobDescription,
       })
     );
-  }, [draftLoaded, resumeText, jobDescription]);
+  }, [resumeText, jobDescription]);
 
   const diffParts = synthResults?.new_resume_text
     ? diffLines(resumeText, synthResults.new_resume_text)
@@ -89,10 +84,6 @@ function App() {
 
 
   const finalResumeText = buildFinalResume(diffGroups, changeDecisions);
-
-  const userFirstName =
-    session?.user?.user_metadata?.full_name?.split(" ")[0] ||
-    session?.user?.email?.split("@")[0];
 
   function setDecision(index, decision) {
     setChangeDecisions({
@@ -188,7 +179,6 @@ function App() {
 
   useEffect(() => {
     if (!isTailoring) {
-      setLoadingMessageIndex(0);
       return;
     }
 
@@ -203,12 +193,11 @@ function App() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isTailoring]);
+  }, [isTailoring, loadingMessages.length]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      setAuthLoading(false);
     });
 
     const {
@@ -276,6 +265,7 @@ function buildFinalResume(diffGroups, changeDecisions) {
   }
 
   async function tailorResume() {
+    setLoadingMessageIndex(0);
     setIsTailoring(true);
     setResults(null);
     setSynthResults(null);
