@@ -30,9 +30,7 @@ export default function LoginModal({ onClose, onBeforeSignIn }) {
           application history.
         </p>
 
-        <button onClick={signInWithGoogle}>
-          Continue with Google
-        </button>
+        <button onClick={signInWithGoogle}>Continue with Google</button>
       </div>
     </div>
   );

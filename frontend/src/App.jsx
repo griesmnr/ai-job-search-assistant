@@ -15,7 +15,6 @@ const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;
 const DRAFT_STORAGE_KEY = "resume-tailor-draft";
 
 function App() {
-  
   const [results, setResults] = useState(null);
   const [synthResults, setSynthResults] = useState(null);
 
@@ -29,7 +28,6 @@ function App() {
   const [resumeError, setResumeError] = useState("");
   const [jobDescriptionError, setJobDescriptionError] = useState("");
   const [activeTab, setActiveTab] = useState("tailor");
-  
 
   function getSavedDraft() {
     try {
@@ -58,7 +56,7 @@ function App() {
     }
   }
 
-  const savedDraft = getSavedDraft(); 
+  const savedDraft = getSavedDraft();
 
   const [resumeText, setResumeText] = useState(savedDraft.resumeText);
 
@@ -79,10 +77,8 @@ function App() {
   const diffParts = synthResults?.new_resume_text
     ? diffLines(resumeText, synthResults.new_resume_text)
     : [];
-  
+
   const diffGroups = buildDiffGroups(diffParts);
-
-
 
   const finalResumeText = buildFinalResume(diffGroups, changeDecisions);
 
@@ -143,8 +139,8 @@ function App() {
       }
     }
 
-  return groups;
-}
+    return groups;
+  }
 
   const unresolvedChanges = diffGroups.some((group, index) => {
     if (group.type === "unchanged") {
@@ -155,8 +151,6 @@ function App() {
   });
 
   const allChangesReviewed = !unresolvedChanges;
-
-
 
   useEffect(() => {
     localStorage.setItem(
@@ -175,7 +169,7 @@ function App() {
     "Consulting Claude...",
     "Consulting Gemini...",
     "Building resume...",
-    "Almost ready..."
+    "Almost ready...",
   ];
 
   useEffect(() => {
@@ -211,7 +205,7 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-function buildFinalResume(diffGroups, changeDecisions) {
+  function buildFinalResume(diffGroups, changeDecisions) {
     return diffGroups
       .map((group, index) => {
         const decision = changeDecisions[index];
@@ -278,7 +272,7 @@ function buildFinalResume(diffGroups, changeDecisions) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-App-Secret": `${appSecret}`
+          "X-App-Secret": `${appSecret}`,
         },
         body: JSON.stringify({
           resume_text: resumeText,
@@ -294,13 +288,13 @@ function buildFinalResume(diffGroups, changeDecisions) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-App-Secret": `${appSecret}`
+          "X-App-Secret": `${appSecret}`,
         },
         body: JSON.stringify({
           results: analyzeData.results,
           originalResumeText: resumeText,
           job_description: jobDescription,
-          execution_id: analyzeData.execution_id
+          execution_id: analyzeData.execution_id,
         }),
       });
 
@@ -311,15 +305,13 @@ function buildFinalResume(diffGroups, changeDecisions) {
     }
   }
 
-  const isMaintenanceMode =
-    import.meta.env.VITE_MAINTENANCE_MODE === "true";
+  const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === "true";
 
   if (isMaintenanceMode) {
     return <MaintenancePage />;
   }
 
   return (
-    
     <main>
       <AppHeader session={session} />
 
@@ -350,22 +342,16 @@ function buildFinalResume(diffGroups, changeDecisions) {
           finalResumeText={finalResumeText}
         />
       )}
-      
-      {activeTab === "history" && (
-        <HistoryPage session={session} />
-      )}
 
-      {activeTab === "brushups" && (
-        <BrushUpsPage session={session} />
-      )}
+      {activeTab === "history" && <HistoryPage session={session} />}
+
+      {activeTab === "brushups" && <BrushUpsPage session={session} />}
 
       {showLoginModal && (
-        <LoginModal onClose={() => setShowLoginModal(false)} 
-          />
+        <LoginModal onClose={() => setShowLoginModal(false)} />
       )}
     </main>
   );
-  
 }
 
 export default App;

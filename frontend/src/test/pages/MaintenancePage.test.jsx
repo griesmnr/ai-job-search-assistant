@@ -9,7 +9,5 @@ test("shows maintenance message", () => {
     screen.getByText(/Resume Optimizer is under maintenance/i)
   ).toBeInTheDocument();
 
-  expect(
-    screen.getByText(/security and reliability/i)
-  ).toBeInTheDocument();
+  expect(screen.getByText(/security and reliability/i)).toBeInTheDocument();
 });

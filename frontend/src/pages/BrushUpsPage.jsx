@@ -9,9 +9,10 @@ export default function BrushUpsPage({ session }) {
     async function loadBrushUps() {
       setIsLoading(true);
 
-    const { data, error } = await supabase
-      .from("tailor_resume_executions")
-      .select(`
+      const { data, error } = await supabase
+        .from("tailor_resume_executions")
+        .select(
+          `
         id,
         company_name,
         job_title,
@@ -29,9 +30,10 @@ export default function BrushUpsPage({ session }) {
             )
           )
         )
-      `)
-      .eq("user_id", session.user.id)
-      .eq("is_active", true);
+      `
+        )
+        .eq("user_id", session.user.id)
+        .eq("is_active", true);
 
       if (error) {
         console.error("Brush ups load error:", error);
@@ -48,17 +50,14 @@ export default function BrushUpsPage({ session }) {
         topics.forEach((brushUp) => {
           const canonicalTopic = brushUp.canonical_brush_up_topics;
 
-          const displayTopic =
-            canonicalTopic?.display_name ??
-            brushUp.topic;
+          const displayTopic = canonicalTopic?.display_name ?? brushUp.topic;
 
           if (!displayTopic?.trim()) {
             return;
           }
 
           const key =
-            canonicalTopic?.canonical_key ??
-            displayTopic.trim().toLowerCase();
+            canonicalTopic?.canonical_key ?? displayTopic.trim().toLowerCase();
 
           if (!topicMap.has(key)) {
             topicMap.set(key, {
@@ -112,7 +111,11 @@ export default function BrushUpsPage({ session }) {
   }
 
   if (brushUps.length === 0) {
-    return <p>No brush-ups yet. Active job opportunities will generate topics here.</p>;
+    return (
+      <p>
+        No brush-ups yet. Active job opportunities will generate topics here.
+      </p>
+    );
   }
 
   return (

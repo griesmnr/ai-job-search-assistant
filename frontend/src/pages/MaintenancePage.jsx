@@ -7,8 +7,8 @@ export default function MaintenancePage() {
         <h1>Resume Optimizer is under maintenance</h1>
 
         <p>
-          We’re making a few updates to improve security and reliability.
-          Please check back in a few minutes.
+          We’re making a few updates to improve security and reliability. Please
+          check back in a few minutes.
         </p>
       </div>
     </main>

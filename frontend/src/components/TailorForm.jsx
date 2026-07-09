@@ -53,11 +53,7 @@ export default function TailorForm({
         )}
       </label>
 
-      <button
-        onClick={handleTailorClick}
-        type="button"
-        disabled={isTailoring}
-      >
+      <button onClick={handleTailorClick} type="button" disabled={isTailoring}>
         {isTailoring ? "Optimizing..." : "Optimize My Resume"}
       </button>
 

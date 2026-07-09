@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabase";
 
-
-
 export default function HistoryPage({ session }) {
-
   async function toggleExecutionStatus(execution) {
     const nextIsActive = !execution.is_active;
 
@@ -21,13 +18,11 @@ export default function HistoryPage({ session }) {
 
     setExecutions((currentExecutions) =>
       currentExecutions.map((item) =>
-        item.id === execution.id
-          ? { ...item, is_active: nextIsActive }
-          : item
+        item.id === execution.id ? { ...item, is_active: nextIsActive } : item
       )
     );
   }
-  
+
   const [executions, setExecutions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -37,7 +32,8 @@ export default function HistoryPage({ session }) {
 
       const { data, error } = await supabase
         .from("tailor_resume_executions")
-        .select(`
+        .select(
+          `
           id,
           created_at,
           company_name,
@@ -57,7 +53,8 @@ export default function HistoryPage({ session }) {
               )
             )
           )
-        `)
+        `
+        )
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
 
@@ -89,18 +86,18 @@ export default function HistoryPage({ session }) {
 
       <div className="history-list">
         {executions.map((execution) => {
-        const synthesis = execution.synthesis_results?.[0];
+          const synthesis = execution.synthesis_results?.[0];
 
-        const brushUps = synthesis?.synthesis_brush_up_topics ?? [];
+          const brushUps = synthesis?.synthesis_brush_up_topics ?? [];
 
-        return (
+          return (
             <article className="history-card" key={execution.id}>
-            <div className="history-card-main">
+              <div className="history-card-main">
                 <div>
-                <h3>{execution.job_title || "Unknown Position"}</h3>
-                <p className="history-company">
+                  <h3>{execution.job_title || "Unknown Position"}</h3>
+                  <p className="history-company">
                     {execution.company_name || "Unknown Company"}
-                </p>
+                  </p>
                 </div>
 
                 <p className="history-date">
@@ -117,27 +114,27 @@ export default function HistoryPage({ session }) {
                 >
                   {execution.is_active ? "Active" : "Inactive"}
                 </button>
-            </div>
+              </div>
 
-            <div className="history-brushups">
-              <span className="history-label">Brush-up Topics</span>
+              <div className="history-brushups">
+                <span className="history-label">Brush-up Topics</span>
 
-              <ul className="brushup-list">
-                {brushUps.map((brushUp) => {
-                  const displayTopic =
-                    brushUp.canonical_brush_up_topics?.display_name ??
-                    brushUp.topic;
+                <ul className="brushup-list">
+                  {brushUps.map((brushUp) => {
+                    const displayTopic =
+                      brushUp.canonical_brush_up_topics?.display_name ??
+                      brushUp.topic;
 
-                  const key =
-                    brushUp.canonical_brush_up_topics?.canonical_key ??
-                    brushUp.topic;
+                    const key =
+                      brushUp.canonical_brush_up_topics?.canonical_key ??
+                      brushUp.topic;
 
-                  return <li key={key}>{displayTopic}</li>;
-                })}
-              </ul>
-            </div>
+                    return <li key={key}>{displayTopic}</li>;
+                  })}
+                </ul>
+              </div>
             </article>
-        );
+          );
         })}
       </div>
     </section>

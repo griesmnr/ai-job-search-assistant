@@ -22,10 +22,10 @@ export default function MoreInfoSection({
           <section className="synthesis-results">
             <h2>What is happening?</h2>
             <p>
-              3 different AI models were consulted to get information on how well
-              your resume matches for this job. Below explains some of the key
-              takeaways from all 3 models, and then a breakdown of each model's
-              opinion more granularly.
+              3 different AI models were consulted to get information on how
+              well your resume matches for this job. Below explains some of the
+              key takeaways from all 3 models, and then a breakdown of each
+              model's opinion more granularly.
             </p>
 
             <h2>Model Differences</h2>

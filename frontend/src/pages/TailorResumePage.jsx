@@ -60,7 +60,6 @@ export default function TailorResumePage({
         approveAllChanges={approveAllChanges}
       />
 
-    
       <FinalResume
         synthResults={synthResults}
         allChangesReviewed={allChangesReviewed}
