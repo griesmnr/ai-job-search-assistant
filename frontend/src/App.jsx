@@ -8,12 +8,14 @@ import AppHeader from "./components/AppHeader";
 import AppTabs from "./components/AppTabs";
 import TailorResumePage from "./pages/TailorResumePage";
 import BrushUpsPage from "./pages/BrushUpsPage";
+import MaintenancePage from "./pages/MaintenancePage";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;
 const DRAFT_STORAGE_KEY = "resume-tailor-draft";
 
 function App() {
+  
   const [results, setResults] = useState(null);
   const [synthResults, setSynthResults] = useState(null);
 
@@ -28,6 +30,8 @@ function App() {
   const [jobDescriptionError, setJobDescriptionError] = useState("");
   const [activeTab, setActiveTab] = useState("tailor");
   const [draftLoaded, setDraftLoaded] = useState(false);
+
+  
 
   function getSavedDraft() {
     try {
@@ -316,7 +320,15 @@ function buildFinalResume(diffGroups, changeDecisions) {
     }
   }
 
+  const isMaintenanceMode =
+    import.meta.env.VITE_MAINTENANCE_MODE === "true";
+
+  if (isMaintenanceMode) {
+    return <MaintenancePage />;
+  }
+
   return (
+    
     <main>
       <AppHeader session={session} />
 

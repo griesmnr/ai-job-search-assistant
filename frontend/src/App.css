@@ -550,3 +550,37 @@ button {
 .full-width {
     grid-column: 1 / span 2;
 }
+
+.maintenance-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.maintenance-card {
+  max-width: 520px;
+  text-align: center;
+  background: #1f1f1f;
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.maintenance-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.maintenance-card p {
+  opacity: 0.85;
+  line-height: 1.5;
+}
+
+.maintenance-card h1 {
+  font-size: 4rem;
+  line-height: 1.15;
+  margin: 1rem 0 1.5rem;
+  color: white;
+}
