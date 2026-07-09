@@ -35,19 +35,18 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173",
-        "https://ai-job-search-assistant-beta.vercel.app"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://ai-job-search-assistant-beta.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
 def load_prompt_template(filename: str) -> str:
-    prompt_path = os.path.join(
-        os.path.dirname(__file__),
-        "prompts",
-        filename
-    )
+    prompt_path = os.path.join(os.path.dirname(__file__), "prompts", filename)
 
     with open(prompt_path, "r", encoding="utf-8") as file:
         return file.read()
@@ -58,11 +57,13 @@ class AnalyzeRequest(BaseModel):
     job_description: str = Field(min_length=1)
     user_id: str
 
+
 class SynthesizeRequest(BaseModel):
     execution_id: str
     results: list[dict]
     originalResumeText: str
     job_description: str
+
 
 def get_canonical_brush_up_topic_id(topic: str):
     normalized_topic = topic.strip().lower()
@@ -71,8 +72,7 @@ def get_canonical_brush_up_topic_id(topic: str):
         return None
 
     canonical_response = (
-        supabase
-        .table("canonical_brush_up_topics")
+        supabase.table("canonical_brush_up_topics")
         .select("id")
         .eq("canonical_key", normalized_topic)
         .limit(1)
@@ -83,8 +83,7 @@ def get_canonical_brush_up_topic_id(topic: str):
         return canonical_response.data[0]["id"]
 
     alias_response = (
-        supabase
-        .table("brush_up_topic_aliases")
+        supabase.table("brush_up_topic_aliases")
         .select("canonical_brush_up_topic_id")
         .eq("alias", normalized_topic)
         .limit(1)
@@ -96,24 +95,31 @@ def get_canonical_brush_up_topic_id(topic: str):
 
     return None
 
+
 def create_tailor_resume_execution(request: AnalyzeRequest, results: list[dict]):
-    
+
     metadata = get_execution_metadata(results)
 
-    response = supabase.table("tailor_resume_executions").insert({
-        "user_id": request.user_id,
-        "job_description": request.job_description,
-        "user_resume": request.resume_text,
-        "company_name": metadata["company_name"],
-        "job_title": metadata["job_title"],
-    }).execute()
+    response = (
+        supabase.table("tailor_resume_executions")
+        .insert(
+            {
+                "user_id": request.user_id,
+                "job_description": request.job_description,
+                "user_resume": request.resume_text,
+                "company_name": metadata["company_name"],
+                "job_title": metadata["job_title"],
+            }
+        )
+        .execute()
+    )
 
     return response.data[0]["id"]
 
+
 def save_analysis_result(execution_id: str, provider_result: dict):
     model_response = (
-        supabase
-        .table("ai_models")
+        supabase.table("ai_models")
         .select("id, ai_providers!inner(provider_name)")
         .eq("model_name", provider_result["model"])
         .eq("ai_providers.provider_name", provider_result["provider"])
@@ -125,15 +131,23 @@ def save_analysis_result(execution_id: str, provider_result: dict):
 
     analysis = provider_result.get("analysis")
 
-    response = supabase.table("analysis_results").insert({
-        "tailor_resume_execution_id": execution_id,
-        "ai_model_id": ai_model_id,
-        "success": provider_result["success"],
-        "error_message": provider_result.get("error"),
-        "match_score": analysis.get("match_score") if analysis else None,
-        "match_score_explanation": analysis.get("match_score_explanation") if analysis else None,
-        "raw_response_json": analysis if analysis else None,
-    }).execute()
+    response = (
+        supabase.table("analysis_results")
+        .insert(
+            {
+                "tailor_resume_execution_id": execution_id,
+                "ai_model_id": ai_model_id,
+                "success": provider_result["success"],
+                "error_message": provider_result.get("error"),
+                "match_score": analysis.get("match_score") if analysis else None,
+                "match_score_explanation": (
+                    analysis.get("match_score_explanation") if analysis else None
+                ),
+                "raw_response_json": analysis if analysis else None,
+            }
+        )
+        .execute()
+    )
 
     analysis_result_id = response.data[0]["id"]
 
@@ -141,36 +155,44 @@ def save_analysis_result(execution_id: str, provider_result: dict):
         return
 
     for keyword in analysis.get("missing_keywords", []):
-        supabase.table("missing_keywords").insert({
-            "analysis_result_id": analysis_result_id,
-            "priority": keyword.get("priority"),
-            "keyword": keyword.get("keyword"),
-            "why_it_matters": keyword.get("why_it_matters"),
-        }).execute()
+        supabase.table("missing_keywords").insert(
+            {
+                "analysis_result_id": analysis_result_id,
+                "priority": keyword.get("priority"),
+                "keyword": keyword.get("keyword"),
+                "why_it_matters": keyword.get("why_it_matters"),
+            }
+        ).execute()
 
     for suggestion in analysis.get("bullet_suggestions", []):
-        supabase.table("bullet_suggestions").insert({
-            "analysis_result_id": analysis_result_id,
-            "suggestion": suggestion,
-        }).execute()
+        supabase.table("bullet_suggestions").insert(
+            {
+                "analysis_result_id": analysis_result_id,
+                "suggestion": suggestion,
+            }
+        ).execute()
 
     for brushup_topic in analysis.get("brush_up_topics", []):
         canonical_topic_id = get_canonical_brush_up_topic_id(
             brushup_topic.get("topic", "")
         )
 
-        supabase.table("analysis_brush_up_topics").insert({
-            "analysis_result_id": analysis_result_id,
-            "canonical_brush_up_topic_id": canonical_topic_id,
-            "priority": brushup_topic.get("priority"),
-            "topic" : brushup_topic.get("topic"),
-            "why_it_matters": brushup_topic.get("why_it_matters"),
-        }).execute()
+        supabase.table("analysis_brush_up_topics").insert(
+            {
+                "analysis_result_id": analysis_result_id,
+                "canonical_brush_up_topic_id": canonical_topic_id,
+                "priority": brushup_topic.get("priority"),
+                "topic": brushup_topic.get("topic"),
+                "why_it_matters": brushup_topic.get("why_it_matters"),
+            }
+        ).execute()
 
-def save_synthesis_result(execution_id: str, provider_name: str, model_name: str, synthesis: dict):
+
+def save_synthesis_result(
+    execution_id: str, provider_name: str, model_name: str, synthesis: dict
+):
     model_response = (
-        supabase
-        .table("ai_models")
+        supabase.table("ai_models")
         .select("id, ai_providers!inner(provider_name)")
         .eq("model_name", model_name)
         .eq("ai_providers.provider_name", provider_name)
@@ -180,46 +202,63 @@ def save_synthesis_result(execution_id: str, provider_name: str, model_name: str
 
     ai_model_id = model_response.data["id"]
 
-    response = supabase.table("synthesis_results").insert({
-        "tailor_resume_execution_id": execution_id,
-        "ai_model_id": ai_model_id,
-        "overall_summary": synthesis.get("overall_summary"),
-        "average_original_match_score": synthesis.get("average_original_match_score"),
-        "estimated_new_match_score": synthesis.get("estimated_new_match_score"),
-        "estimated_new_match_score_explanation": synthesis.get("estimated_new_match_score_explanation"),
-        "new_proposed_resume": synthesis.get("new_resume_text"),
-        "cover_letter": synthesis.get("cover_letter"),
-        "raw_response_json": synthesis,
-    }).execute()
+    response = (
+        supabase.table("synthesis_results")
+        .insert(
+            {
+                "tailor_resume_execution_id": execution_id,
+                "ai_model_id": ai_model_id,
+                "overall_summary": synthesis.get("overall_summary"),
+                "average_original_match_score": synthesis.get(
+                    "average_original_match_score"
+                ),
+                "estimated_new_match_score": synthesis.get("estimated_new_match_score"),
+                "estimated_new_match_score_explanation": synthesis.get(
+                    "estimated_new_match_score_explanation"
+                ),
+                "new_proposed_resume": synthesis.get("new_resume_text"),
+                "cover_letter": synthesis.get("cover_letter"),
+                "raw_response_json": synthesis,
+            }
+        )
+        .execute()
+    )
 
     synthesis_result_id = response.data[0]["id"]
 
     for item in synthesis.get("notable_model_differences", []):
-        supabase.table("notable_model_differences").insert({
-            "synthesis_result_id": synthesis_result_id,
-            "topic": item.get("topic"),
-            "difference": item.get("difference"),
-        }).execute()
+        supabase.table("notable_model_differences").insert(
+            {
+                "synthesis_result_id": synthesis_result_id,
+                "topic": item.get("topic"),
+                "difference": item.get("difference"),
+            }
+        ).execute()
 
     for step in synthesis.get("recommended_next_steps", []):
-        supabase.table("recommended_next_steps").insert({
-            "synthesis_result_id": synthesis_result_id,
-            "priority": step.get("priority"),
-            "action": step.get("action"),
-        }).execute()
+        supabase.table("recommended_next_steps").insert(
+            {
+                "synthesis_result_id": synthesis_result_id,
+                "priority": step.get("priority"),
+                "action": step.get("action"),
+            }
+        ).execute()
 
     for brushup_topic in synthesis.get("synthesized_brush_up_topics", []):
-        supabase.table("synthesis_brush_up_topics").insert({
-            "synthesis_result_id": synthesis_result_id,
-            "topic": brushup_topic.get("topic"),
-            "canonical_brush_up_topic_id": get_canonical_brush_up_topic_id(
-                brushup_topic.get("topic", "")
-            ),
-            "priority": brushup_topic.get("priority"),
-            "why_it_matters": brushup_topic.get("why_it_matters"),
-        }).execute()
+        supabase.table("synthesis_brush_up_topics").insert(
+            {
+                "synthesis_result_id": synthesis_result_id,
+                "topic": brushup_topic.get("topic"),
+                "canonical_brush_up_topic_id": get_canonical_brush_up_topic_id(
+                    brushup_topic.get("topic", "")
+                ),
+                "priority": brushup_topic.get("priority"),
+                "why_it_matters": brushup_topic.get("why_it_matters"),
+            }
+        ).execute()
 
     return synthesis_result_id
+
 
 def get_execution_metadata(results: list[dict]) -> dict:
     for result in results:
@@ -242,12 +281,11 @@ def get_execution_metadata(results: list[dict]) -> dict:
         "job_title": None,
     }
 
+
 def validate_secret(app_secret: Optional[str]):
     if app_secret != APP_ACCESS_SECRET:
-        raise HTTPException(
-            status_code=401,
-            detail="Unauthorized"
-        )
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
 
 def clean_json_response(content: str) -> str:
     cleaned = content.strip()
@@ -301,7 +339,6 @@ def analyze_with_openai(request: AnalyzeRequest):
 
 def analyze_with_claude(request: AnalyzeRequest):
     prompt = build_analysis_prompt(request.resume_text, request.job_description)
-    
 
     response = anthropic_client.messages.create(
         model=anthropic_model,
@@ -327,7 +364,9 @@ def analyze_with_gemini(request: AnalyzeRequest):
 
 
 @app.post("/analyze")
-def analyze(request: AnalyzeRequest, x_app_secret: Optional[str] = Header(default=None)):
+def analyze(
+    request: AnalyzeRequest, x_app_secret: Optional[str] = Header(default=None)
+):
     validate_secret(x_app_secret)
     providers = [
         {
@@ -373,11 +412,8 @@ def analyze(request: AnalyzeRequest, x_app_secret: Optional[str] = Header(defaul
 
     for result in results:
         save_analysis_result(execution_id, result)
-        
-    return {
-        "execution_id": execution_id,
-        "results": results
-    }
+
+    return {"execution_id": execution_id, "results": results}
 
 
 def build_synthesis_prompt(
@@ -397,10 +433,12 @@ def build_synthesis_prompt(
 
 
 @app.post("/synthesize")
-def synthesize(request: SynthesizeRequest, x_app_secret: Optional[str] = Header(default=None)):
-    
+def synthesize(
+    request: SynthesizeRequest, x_app_secret: Optional[str] = Header(default=None)
+):
+
     validate_secret(x_app_secret)
-    
+
     average_original_match_score = calculate_average_match_score(request.results)
 
     results_json = json.dumps(request.results, indent=2)
