@@ -22,7 +22,7 @@ describe("LoginModal", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Sign in to tailor your resume",
+        name: "Sign in to Optimize your Resume",
       })
     ).toBeInTheDocument();
 

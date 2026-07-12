@@ -23,7 +23,7 @@ export default function LoginModal({ onClose, onBeforeSignIn }) {
           ×
         </button>
 
-        <h2>Sign in to Optmize your Resume</h2>
+        <h2>Sign in to Optimize your Resume</h2>
 
         <p>
           Sign in with Google to run the AI Optimization workflow and save your

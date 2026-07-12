@@ -12,7 +12,6 @@ import json
 from fastapi import Header
 from supabase import create_client
 import traceback
-from typing import Optional
 
 load_dotenv(".env.local", override=True)
 
