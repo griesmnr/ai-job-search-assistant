@@ -2,7 +2,6 @@ import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-
 ANALYZE_BODY = {
     "resume_text": "Python developer resume",
     "job_description": "Backend engineer job",
@@ -99,9 +98,7 @@ def test_analyze_returns_all_provider_results(
         },
     )
 
-    create_execution = MagicMock(
-        return_value="execution-123"
-    )
+    create_execution = MagicMock(return_value="execution-123")
     save_analysis = MagicMock()
 
     monkeypatch.setattr(
@@ -128,17 +125,12 @@ def test_analyze_returns_all_provider_results(
     assert body["execution_id"] == "execution-123"
     assert len(body["results"]) == 3
 
-    assert all(
-        result["success"] is True
-        for result in body["results"]
-    )
+    assert all(result["success"] is True for result in body["results"])
 
     create_execution.assert_called_once()
     assert save_analysis.call_count == 3
 
-    create_request, create_results, user_id = (
-        create_execution.call_args.args
-    )
+    create_request, create_results, user_id = create_execution.call_args.args
 
     assert create_request.resume_text == ANALYZE_BODY["resume_text"]
     assert create_results == body["results"]
@@ -208,9 +200,7 @@ def test_analyze_preserves_provider_failure(
     body = response.json()
 
     claude_result = next(
-        result
-        for result in body["results"]
-        if result["provider"] == "claude"
+        result for result in body["results"] if result["provider"] == "claude"
     )
 
     assert claude_result["success"] is False
@@ -275,21 +265,15 @@ def test_synthesize_returns_synthesis(
         "synthesized_brush_up_topics": [],
     }
 
-    main_module.openai_client.chat.completions.create.return_value = (
-        SimpleNamespace(
-            choices=[
-                SimpleNamespace(
-                    message=SimpleNamespace(
-                        content=json.dumps(synthesis_content)
-                    )
-                )
-            ]
-        )
+    main_module.openai_client.chat.completions.create.return_value = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(content=json.dumps(synthesis_content))
+            )
+        ]
     )
 
-    save_synthesis = MagicMock(
-        return_value="synthesis-123"
-    )
+    save_synthesis = MagicMock(return_value="synthesis-123")
 
     monkeypatch.setattr(
         main_module,
@@ -345,16 +329,8 @@ def test_synthesize_returns_500_for_invalid_json(
         lambda *args, **kwargs: "synthesis prompt",
     )
 
-    main_module.openai_client.chat.completions.create.return_value = (
-        SimpleNamespace(
-            choices=[
-                SimpleNamespace(
-                    message=SimpleNamespace(
-                        content="not valid json"
-                    )
-                )
-            ]
-        )
+    main_module.openai_client.chat.completions.create.return_value = SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(content="not valid json"))]
     )
 
     response = client.post(
@@ -364,10 +340,7 @@ def test_synthesize_returns_500_for_invalid_json(
     )
 
     assert response.status_code == 500
-    assert (
-        response.json()["detail"]
-        == "Synthesis model returned invalid JSON."
-    )
+    assert response.json()["detail"] == "Synthesis model returned invalid JSON."
 
 
 def test_synthesize_rejects_wrong_execution_owner(
@@ -404,7 +377,4 @@ def test_synthesize_rejects_wrong_execution_owner(
     )
 
     assert response.status_code == 403
-    assert (
-        response.json()["detail"]
-        == "You do not have access to this execution"
-    )
+    assert response.json()["detail"] == "You do not have access to this execution"

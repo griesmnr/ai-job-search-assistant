@@ -115,10 +115,7 @@ def test_build_analysis_prompt(main_module, monkeypatch):
     monkeypatch.setattr(
         main_module,
         "load_prompt_template",
-        lambda filename: (
-            "Resume:\n{resume_text}\n\n"
-            "Job:\n{job_description}"
-        ),
+        lambda filename: ("Resume:\n{resume_text}\n\n" "Job:\n{job_description}"),
     )
 
     prompt = main_module.build_analysis_prompt(

@@ -11,7 +11,6 @@ import supabase as supabase_package
 from fastapi.testclient import TestClient
 from google import genai
 
-
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 
 if str(BACKEND_DIR) not in sys.path:

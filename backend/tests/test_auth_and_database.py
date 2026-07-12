@@ -54,36 +54,26 @@ def test_authenticated_user_id_rejects_malformed_header(
 def test_authenticated_user_id_returns_verified_supabase_user(
     main_module,
 ):
-    main_module.supabase.auth.get_user.return_value = (
-        SimpleNamespace(
-            user=SimpleNamespace(
-                id="verified-user-123",
-            )
+    main_module.supabase.auth.get_user.return_value = SimpleNamespace(
+        user=SimpleNamespace(
+            id="verified-user-123",
         )
     )
 
-    user_id = main_module.get_authenticated_user_id(
-        "Bearer valid-token"
-    )
+    user_id = main_module.get_authenticated_user_id("Bearer valid-token")
 
     assert user_id == "verified-user-123"
 
-    main_module.supabase.auth.get_user.assert_called_once_with(
-        "valid-token"
-    )
+    main_module.supabase.auth.get_user.assert_called_once_with("valid-token")
 
 
 def test_authenticated_user_id_rejects_missing_user(
     main_module,
 ):
-    main_module.supabase.auth.get_user.return_value = (
-        SimpleNamespace(user=None)
-    )
+    main_module.supabase.auth.get_user.return_value = SimpleNamespace(user=None)
 
     with pytest.raises(HTTPException) as error:
-        main_module.get_authenticated_user_id(
-            "Bearer invalid-token"
-        )
+        main_module.get_authenticated_user_id("Bearer invalid-token")
 
     assert error.value.status_code == 401
     assert error.value.detail == "Invalid or expired access token"
@@ -97,9 +87,7 @@ def test_authenticated_user_id_handles_supabase_failure(
     )
 
     with pytest.raises(HTTPException) as error:
-        main_module.get_authenticated_user_id(
-            "Bearer broken-token"
-        )
+        main_module.get_authenticated_user_id("Bearer broken-token")
 
     assert error.value.status_code == 401
     assert error.value.detail == "Invalid or expired access token"
@@ -121,9 +109,7 @@ def test_verify_execution_ownership_allows_owner(main_module):
         user_id="user-123",
     )
 
-    main_module.supabase.table.assert_called_once_with(
-        "tailor_resume_executions"
-    )
+    main_module.supabase.table.assert_called_once_with("tailor_resume_executions")
 
     query.eq.assert_any_call("id", "execution-1")
     query.eq.assert_any_call("user_id", "user-123")
@@ -142,10 +128,7 @@ def test_verify_execution_ownership_rejects_non_owner(
         )
 
     assert error.value.status_code == 403
-    assert (
-        error.value.detail
-        == "You do not have access to this execution"
-    )
+    assert error.value.detail == "You do not have access to this execution"
 
 
 def test_canonical_topic_returns_none_for_blank_topic(
@@ -170,9 +153,7 @@ def test_canonical_topic_finds_exact_canonical_key(
 
     main_module.supabase.table.return_value = canonical_query
 
-    result = main_module.get_canonical_brush_up_topic_id(
-        "  PostgreSQL  "
-    )
+    result = main_module.get_canonical_brush_up_topic_id("  PostgreSQL  ")
 
     assert result == "canonical-postgresql"
 
@@ -187,9 +168,7 @@ def test_canonical_topic_finds_alias(main_module):
     alias_query = create_query_response(
         [
             {
-                "canonical_brush_up_topic_id": (
-                    "canonical-postgresql"
-                ),
+                "canonical_brush_up_topic_id": ("canonical-postgresql"),
             }
         ]
     )
@@ -199,9 +178,7 @@ def test_canonical_topic_finds_alias(main_module):
         alias_query,
     ]
 
-    result = main_module.get_canonical_brush_up_topic_id(
-        "Postgres Internals"
-    )
+    result = main_module.get_canonical_brush_up_topic_id("Postgres Internals")
 
     assert result == "canonical-postgresql"
 
@@ -222,8 +199,6 @@ def test_canonical_topic_returns_none_when_unknown(
         alias_query,
     ]
 
-    result = main_module.get_canonical_brush_up_topic_id(
-        "Unknown technology"
-    )
+    result = main_module.get_canonical_brush_up_topic_id("Unknown technology")
 
     assert result is None
