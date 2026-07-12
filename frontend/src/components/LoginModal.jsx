@@ -23,10 +23,10 @@ export default function LoginModal({ onClose, onBeforeSignIn }) {
           ×
         </button>
 
-        <h2>Sign in to tailor your resume</h2>
+        <h2>Sign in to Optmize your Resume</h2>
 
         <p>
-          Sign in with Google to run the AI tailoring workflow and save your
+          Sign in with Google to run the AI Optimization workflow and save your
           application history.
         </p>
 
