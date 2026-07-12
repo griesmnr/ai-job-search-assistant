@@ -45,6 +45,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_authenticated_user_id(
     authorization: Optional[str],
 ) -> str:
@@ -133,13 +134,13 @@ def get_canonical_brush_up_topic_id(topic: str):
 
     return None
 
+
 def verify_execution_ownership(
     execution_id: str,
     user_id: str,
 ) -> None:
     response = (
-        supabase
-        .table("tailor_resume_executions")
+        supabase.table("tailor_resume_executions")
         .select("id")
         .eq("id", execution_id)
         .eq("user_id", user_id)
@@ -154,7 +155,9 @@ def verify_execution_ownership(
         )
 
 
-def create_tailor_resume_execution(request: AnalyzeRequest, results: list[dict], user_id: str):
+def create_tailor_resume_execution(
+    request: AnalyzeRequest, results: list[dict], user_id: str
+):
 
     metadata = get_execution_metadata(results)
 
@@ -423,7 +426,9 @@ def analyze_with_gemini(request: AnalyzeRequest):
 
 @app.post("/analyze")
 def analyze(
-    request: AnalyzeRequest, x_app_secret: Optional[str] = Header(default=None), authorization: Optional[str] = Header(default=None),
+    request: AnalyzeRequest,
+    x_app_secret: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
 ):
     validate_secret(x_app_secret)
 
@@ -495,7 +500,9 @@ def build_synthesis_prompt(
 
 @app.post("/synthesize")
 def synthesize(
-    request: SynthesizeRequest, x_app_secret: Optional[str] = Header(default=None), authorization: Optional[str] = Header(default=None),
+    request: SynthesizeRequest,
+    x_app_secret: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
 ):
 
     validate_secret(x_app_secret)
