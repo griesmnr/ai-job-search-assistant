@@ -12,6 +12,7 @@ import json
 from fastapi import Header
 from supabase import create_client
 import traceback
+from typing import Optional
 
 load_dotenv(".env.local", override=True)
 
@@ -44,6 +45,44 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def get_authenticated_user_id(
+    authorization: Optional[str],
+) -> str:
+    if not authorization:
+        raise HTTPException(
+            status_code=401,
+            detail="Missing Authorization header",
+        )
+
+    scheme, _, access_token = authorization.partition(" ")
+
+    if scheme.lower() != "bearer" or not access_token:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Authorization header",
+        )
+
+    try:
+        response = supabase.auth.get_user(access_token)
+        user = response.user
+
+        if not user:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or expired access token",
+            )
+
+        return str(user.id)
+
+    except HTTPException:
+        raise
+    except Exception as error:
+        print(f"Authentication error: {error}")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired access token",
+        ) from error
+
 
 def load_prompt_template(filename: str) -> str:
     prompt_path = os.path.join(os.path.dirname(__file__), "prompts", filename)
@@ -55,7 +94,6 @@ def load_prompt_template(filename: str) -> str:
 class AnalyzeRequest(BaseModel):
     resume_text: str = Field(min_length=1)
     job_description: str = Field(min_length=1)
-    user_id: str
 
 
 class SynthesizeRequest(BaseModel):
@@ -95,8 +133,28 @@ def get_canonical_brush_up_topic_id(topic: str):
 
     return None
 
+def verify_execution_ownership(
+    execution_id: str,
+    user_id: str,
+) -> None:
+    response = (
+        supabase
+        .table("tailor_resume_executions")
+        .select("id")
+        .eq("id", execution_id)
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
 
-def create_tailor_resume_execution(request: AnalyzeRequest, results: list[dict]):
+    if not response.data:
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have access to this execution",
+        )
+
+
+def create_tailor_resume_execution(request: AnalyzeRequest, results: list[dict], user_id: str):
 
     metadata = get_execution_metadata(results)
 
@@ -104,7 +162,7 @@ def create_tailor_resume_execution(request: AnalyzeRequest, results: list[dict])
         supabase.table("tailor_resume_executions")
         .insert(
             {
-                "user_id": request.user_id,
+                "user_id": user_id,
                 "job_description": request.job_description,
                 "user_resume": request.resume_text,
                 "company_name": metadata["company_name"],
@@ -365,9 +423,12 @@ def analyze_with_gemini(request: AnalyzeRequest):
 
 @app.post("/analyze")
 def analyze(
-    request: AnalyzeRequest, x_app_secret: Optional[str] = Header(default=None)
+    request: AnalyzeRequest, x_app_secret: Optional[str] = Header(default=None), authorization: Optional[str] = Header(default=None),
 ):
     validate_secret(x_app_secret)
+
+    user_id = get_authenticated_user_id(authorization)
+
     providers = [
         {
             "provider": "openai",
@@ -408,7 +469,7 @@ def analyze(
     with ThreadPoolExecutor(max_workers=3) as executor:
         results = list(executor.map(run_provider, providers))
 
-    execution_id = create_tailor_resume_execution(request, results)
+    execution_id = create_tailor_resume_execution(request, results, user_id)
 
     for result in results:
         save_analysis_result(execution_id, result)
@@ -434,10 +495,17 @@ def build_synthesis_prompt(
 
 @app.post("/synthesize")
 def synthesize(
-    request: SynthesizeRequest, x_app_secret: Optional[str] = Header(default=None)
+    request: SynthesizeRequest, x_app_secret: Optional[str] = Header(default=None), authorization: Optional[str] = Header(default=None),
 ):
 
     validate_secret(x_app_secret)
+
+    user_id = get_authenticated_user_id(authorization)
+
+    verify_execution_ownership(
+        execution_id=request.execution_id,
+        user_id=user_id,
+    )
 
     average_original_match_score = calculate_average_match_score(request.results)
 

@@ -268,16 +268,22 @@ function App() {
     setMoreInfoExpanded(false);
 
     try {
+      const accessToken = session?.access_token;
+
+      if (!accessToken) {
+        throw new Error("You must be signed in.");
+      }
+
       const analyzeResponse = await fetch(`${apiBaseUrl}/analyze`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-App-Secret": `${appSecret}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           resume_text: resumeText,
           job_description: jobDescription,
-          user_id: session.user.id,
         }),
       });
 
@@ -289,6 +295,7 @@ function App() {
         headers: {
           "Content-Type": "application/json",
           "X-App-Secret": `${appSecret}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           results: analyzeData.results,
