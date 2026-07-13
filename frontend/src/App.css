@@ -607,3 +607,33 @@ button {
     transform: rotate(360deg);
   }
 }
+.final-resume {
+  padding-right: 3.75rem;
+}
+
+.resume-output-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.final-resume-output,
+.cover-letter-output {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.copy-button {
+  position: absolute;
+  left: calc(100% + 0.75rem);
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 2.5rem;
+  height: 2.5rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

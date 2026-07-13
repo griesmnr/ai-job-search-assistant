@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { render, screen } from "@testing-library/react";
 import FinalResume from "../../components/FinalResume";
+import { vi } from "vitest";
 
 describe("FinalResume", () => {
   const synthResults = {
@@ -78,5 +80,54 @@ Software Engineer`;
     textAreas.forEach((textArea) => {
       expect(textArea).toHaveAttribute("readonly");
     });
+  });
+
+  test("copies the final resume", async () => {
+    const user = userEvent.setup();
+
+    const writeTextSpy = vi
+      .spyOn(navigator.clipboard, "writeText")
+      .mockResolvedValue(undefined);
+
+    render(
+      <FinalResume
+        synthResults={synthResults}
+        allChangesReviewed={true}
+        finalResumeText="Final optimized resume"
+      />
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Copy final resume",
+      })
+    );
+
+    expect(writeTextSpy).toHaveBeenCalledWith("Final optimized resume");
+
+    expect(screen.getByText("✓")).toBeInTheDocument();
+  });
+  test("copies the cover letter", async () => {
+    const user = userEvent.setup();
+
+    const writeTextSpy = vi
+      .spyOn(navigator.clipboard, "writeText")
+      .mockResolvedValue(undefined);
+
+    render(
+      <FinalResume
+        synthResults={synthResults}
+        allChangesReviewed={true}
+        finalResumeText="Final optimized resume"
+      />
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Copy cover letter",
+      })
+    );
+
+    expect(writeTextSpy).toHaveBeenCalledWith(synthResults.cover_letter);
   });
 });
