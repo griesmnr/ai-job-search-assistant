@@ -1,5 +1,3 @@
-import LoadingSpinner from "./LoadingSpinner";
-
 export default function TailorForm({
   resumeText,
   setResumeText,
@@ -53,11 +51,16 @@ export default function TailorForm({
         )}
       </label>
 
-      <button onClick={handleTailorClick} type="button" disabled={isTailoring}>
-        {isTailoring ? "Optimizing..." : "Optimize My Resume"}
-      </button>
+      <button
+        onClick={handleTailorClick}
+        type="button"
+        disabled={isTailoring}
+        className="optimize-button"
+      >
+        {isTailoring && <span className="button-spinner" aria-hidden="true" />}
 
-      {isTailoring && <LoadingSpinner message={loadingMessage} />}
+        <span>{isTailoring ? loadingMessage : "Optimize My Resume"}</span>
+      </button>
     </form>
   );
 }

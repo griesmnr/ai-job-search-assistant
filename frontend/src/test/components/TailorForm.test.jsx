@@ -111,10 +111,14 @@ describe("TailorForm", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "Optimizing...",
+        name: "Consulting AI models...",
       })
     ).toBeDisabled();
 
-    expect(screen.getByText("Consulting AI models...")).toBeInTheDocument();
+    const button = screen.getByRole("button", {
+      name: "Consulting AI models...",
+    });
+
+    expect(button.querySelector(".button-spinner")).toBeInTheDocument();
   });
 });
