@@ -80,7 +80,9 @@ describe("MoreInfoSection", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: /more information/i })
+      screen.getByRole("button", {
+        name: /How Are Scores and Suggestions Calculated?/i,
+      })
     ).toBeInTheDocument();
 
     expect(
@@ -101,7 +103,7 @@ describe("MoreInfoSection", () => {
       />
     );
 
-    await user.click(screen.getByRole("button", { name: /more information/i }));
+    await user.click(screen.getByRole("button", { name: /How are Scores/i }));
 
     expect(setMoreInfoExpanded).toHaveBeenCalledWith(true);
   });

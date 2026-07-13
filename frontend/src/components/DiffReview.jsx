@@ -11,6 +11,7 @@ export default function DiffReview({
 
   return (
     <>
+      <br />
       <h2>Proposed Resume Changes for your Review:</h2>
 
       <section className="diff-controls">

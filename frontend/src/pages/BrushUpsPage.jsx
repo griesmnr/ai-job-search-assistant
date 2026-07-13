@@ -123,7 +123,8 @@ export default function BrushUpsPage({ session }) {
       <h2>Brush Ups</h2>
 
       <p className="brushups-intro">
-        Prioritized topics from your active job opportunities.
+        These are areas you could brush up your skills based on the jobs you’ve
+        applied for so far.
       </p>
 
       <div className="brushups-list">

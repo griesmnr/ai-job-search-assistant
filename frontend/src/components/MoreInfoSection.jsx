@@ -14,7 +14,9 @@ export default function MoreInfoSection({
         className="collapse-toggle"
         onClick={() => setMoreInfoExpanded(!moreInfoExpanded)}
       >
-        {moreInfoExpanded ? "▼ Less Information" : "▶ More Information"}
+        {moreInfoExpanded
+          ? "▼ Less Information"
+          : "▶ How Are Scores and Suggestions Calculated?"}
       </button>
 
       {moreInfoExpanded && (
