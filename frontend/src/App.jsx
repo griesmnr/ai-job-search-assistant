@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import { diffLines } from "diff";
 import { supabase } from "./supabase";
@@ -28,6 +28,9 @@ function App() {
   const [resumeError, setResumeError] = useState("");
   const [jobDescriptionError, setJobDescriptionError] = useState("");
   const [activeTab, setActiveTab] = useState("tailor");
+
+  const [executionId, setExecutionId] = useState(null);
+  const lastSavedFinalResume = useRef(null);
 
   function getSavedDraft() {
     try {
@@ -289,6 +292,7 @@ function App() {
 
       const analyzeData = await analyzeResponse.json();
       setResults(analyzeData.results);
+      setExecutionId(analyzeData.execution_id);
 
       const synthesizeResponse = await fetch(`${apiBaseUrl}/synthesize`, {
         method: "POST",
@@ -311,6 +315,44 @@ function App() {
       setIsTailoring(false);
     }
   }
+
+  useEffect(() => {
+    if (
+      !allChangesReviewed ||
+      !executionId ||
+      !session?.user?.id ||
+      !finalResumeText?.trim()
+    ) {
+      return;
+    }
+
+    if (lastSavedFinalResume.current === finalResumeText) {
+      return;
+    }
+
+    async function saveFinalResume() {
+      const { error } = await supabase
+        .from("tailor_resume_executions")
+        .update({
+          final_chosen_resume: finalResumeText,
+        })
+        .eq("id", executionId)
+        .eq("user_id", session.user.id);
+
+      if (error) {
+        console.error("Final resume save error:", error);
+        return;
+      }
+
+      lastSavedFinalResume.current = finalResumeText;
+    }
+
+    saveFinalResume();
+  }, [allChangesReviewed, executionId, finalResumeText, session?.user?.id]);
+
+  useEffect(() => {
+    lastSavedFinalResume.current = "";
+  }, [executionId]);
 
   const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === "true";
 
