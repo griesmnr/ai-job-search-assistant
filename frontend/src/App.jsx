@@ -9,6 +9,7 @@ import AppTabs from "./components/AppTabs";
 import TailorResumePage from "./pages/TailorResumePage";
 import BrushUpsPage from "./pages/BrushUpsPage";
 import MaintenancePage from "./pages/MaintenancePage";
+import saveFinalResume from "./services/finalResume";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;
@@ -330,24 +331,19 @@ function App() {
       return;
     }
 
-    async function saveFinalResume() {
-      const { error } = await supabase
-        .from("tailor_resume_executions")
-        .update({
-          final_chosen_resume: finalResumeText,
-        })
-        .eq("id", executionId)
-        .eq("user_id", session.user.id);
+    async function save() {
+      const { error } = await saveFinalResume(
+        executionId,
+        session.user.id,
+        finalResumeText
+      );
 
-      if (error) {
-        console.error("Final resume save error:", error);
-        return;
+      if (!error) {
+        lastSavedFinalResume.current = finalResumeText;
       }
-
-      lastSavedFinalResume.current = finalResumeText;
     }
 
-    saveFinalResume();
+    save();
   }, [allChangesReviewed, executionId, finalResumeText, session?.user?.id]);
 
   useEffect(() => {
