@@ -2,6 +2,38 @@ import { useEffect, useState } from "react";
 import { supabase } from "../supabase";
 
 export default function HistoryPage({ session }) {
+  function openFinalResume(finalResumeText) {
+    const resumeWindow = window.open("", "_blank");
+
+    if (!resumeWindow) {
+      return;
+    }
+
+    resumeWindow.document.write(`
+    <!doctype html>
+    <html>
+      <head>
+        <title>Final Resume</title>
+        <style>
+          body {
+            max-width: 850px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+            white-space: pre-wrap;
+          }
+        </style>
+      </head>
+
+      <body></body>
+    </html>
+  `);
+
+    resumeWindow.document.body.textContent = finalResumeText;
+    resumeWindow.document.close();
+  }
+
   async function toggleExecutionStatus(execution) {
     const nextIsActive = !execution.is_active;
 
@@ -39,6 +71,7 @@ export default function HistoryPage({ session }) {
           company_name,
           job_title,
           is_active,
+          final_chosen_resume,
           synthesis_results (
             estimated_new_match_score,
             average_original_match_score,
@@ -105,15 +138,33 @@ export default function HistoryPage({ session }) {
                   {new Date(execution.created_at).toLocaleDateString()}
                 </p>
 
-                <button
-                  type="button"
-                  className={`status-toggle ${
-                    execution.is_active ? "status-active" : "status-inactive"
-                  }`}
-                  onClick={() => toggleExecutionStatus(execution)}
-                >
-                  {execution.is_active ? "Active" : "Inactive"}
-                </button>
+                <div className="history-card-actions">
+                  {execution.final_chosen_resume && (
+                    <button
+                      type="button"
+                      className="final-resume-link"
+                      onClick={() =>
+                        openFinalResume(execution.final_chosen_resume)
+                      }
+                      aria-label={`View final resume for ${
+                        execution.job_title || "this position"
+                      }`}
+                    >
+                      <span aria-hidden="true">📄</span>
+                      Final Resume
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    className={`status-toggle ${
+                      execution.is_active ? "status-active" : "status-inactive"
+                    }`}
+                    onClick={() => toggleExecutionStatus(execution)}
+                  >
+                    {execution.is_active ? "Active" : "Inactive"}
+                  </button>
+                </div>
               </div>
 
               <div className="history-brushups">

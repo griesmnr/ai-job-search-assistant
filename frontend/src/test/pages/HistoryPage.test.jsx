@@ -59,6 +59,7 @@ function createExecution(overrides = {}) {
     company_name: "Blue Origin",
     job_title: "Software Developer",
     is_active: true,
+    final_chosen_resume: "Nicole Griesmeyer\n\nSoftware Developer",
     synthesis_results: [
       {
         estimated_new_match_score: 88,
@@ -333,5 +334,95 @@ describe("HistoryPage", () => {
     );
 
     consoleErrorSpy.mockRestore();
+  });
+
+  test("shows a Final Resume button when a saved resume exists", async () => {
+    const historyQuery = createHistoryQuery({
+      data: [createExecution()],
+    });
+
+    supabase.from.mockReturnValue(historyQuery);
+
+    render(<HistoryPage session={session} />);
+
+    expect(
+      await screen.findByRole("button", {
+        name: "View final resume for Software Developer",
+      })
+    ).toBeInTheDocument();
+
+    expect(screen.getByText("Final Resume")).toBeInTheDocument();
+  });
+
+  test("does not show a Final Resume button when no saved resume exists", async () => {
+    const historyQuery = createHistoryQuery({
+      data: [
+        createExecution({
+          final_chosen_resume: null,
+        }),
+      ],
+    });
+
+    supabase.from.mockReturnValue(historyQuery);
+
+    render(<HistoryPage session={session} />);
+
+    await screen.findByRole("heading", {
+      name: "Software Developer",
+    });
+
+    expect(
+      screen.queryByRole("button", {
+        name: /view final resume/i,
+      })
+    ).not.toBeInTheDocument();
+  });
+
+  test("opens the saved final resume in a new browser tab", async () => {
+    const user = userEvent.setup();
+
+    const savedResume = "Nicole Griesmeyer\n\nSoftware Developer";
+
+    const fakeWindow = {
+      document: {
+        write: vi.fn(),
+        close: vi.fn(),
+        body: {
+          textContent: "",
+        },
+      },
+    };
+
+    const openSpy = vi.spyOn(window, "open").mockReturnValue(fakeWindow);
+
+    const historyQuery = createHistoryQuery({
+      data: [
+        createExecution({
+          final_chosen_resume: savedResume,
+        }),
+      ],
+    });
+
+    supabase.from.mockReturnValue(historyQuery);
+
+    render(<HistoryPage session={session} />);
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "View final resume for Software Developer",
+      })
+    );
+
+    expect(openSpy).toHaveBeenCalledWith("", "_blank");
+
+    expect(fakeWindow.document.write).toHaveBeenCalledWith(
+      expect.stringContaining("<title>Final Resume</title>")
+    );
+
+    expect(fakeWindow.document.body.textContent).toBe(savedResume);
+
+    expect(fakeWindow.document.close).toHaveBeenCalledTimes(1);
+
+    openSpy.mockRestore();
   });
 });
