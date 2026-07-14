@@ -9,7 +9,7 @@ import AppTabs from "./components/AppTabs";
 import TailorResumePage from "./pages/TailorResumePage";
 import BrushUpsPage from "./pages/BrushUpsPage";
 import MaintenancePage from "./pages/MaintenancePage";
-import saveFinalResume from "./services/finalResume";
+import { saveFinalResume } from "./services/finalResume";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const appSecret = import.meta.env.VITE_APP_ACCESS_SECRET;

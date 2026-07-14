@@ -4,6 +4,7 @@ cd frontend
 npm run format
 npm run lint
 npm run test:run
+npm run build
 
 cd ../backend || exit 1
 
