@@ -181,8 +181,6 @@ export default function HistoryPage({ session }) {
                   )}
 
                   <label className="history-status-control">
-                    <span className="sr-only">Status: </span>
-
                     <select
                       className={`history-status-select status-${execution.status}`}
                       value={execution.status}
