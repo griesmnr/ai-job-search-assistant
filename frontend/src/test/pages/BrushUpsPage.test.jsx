@@ -19,15 +19,12 @@ function mockSupabaseResponse({ data = [], error = null }) {
   const query = {
     select: vi.fn(),
     eq: vi.fn(),
+    in: vi.fn(),
   };
 
   query.select.mockReturnValue(query);
-
-  // First .eq(): user_id filter
-  query.eq.mockReturnValueOnce(query);
-
-  // Second .eq(): is_active filter and final awaited response
-  query.eq.mockResolvedValueOnce({
+  query.eq.mockReturnValue(query);
+  query.in.mockResolvedValue({
     data,
     error,
   });
@@ -83,7 +80,12 @@ describe("BrushUpsPage", () => {
 
     expect(query.eq).toHaveBeenNthCalledWith(1, "user_id", "user-123");
 
-    expect(query.eq).toHaveBeenNthCalledWith(2, "is_active", true);
+    expect(query.in).toHaveBeenCalledWith("status", [
+      "resume_optimized",
+      "applied",
+      "interviewing",
+      "awaiting_response",
+    ]);
   });
 
   test("uses the canonical display name when one exists", async () => {

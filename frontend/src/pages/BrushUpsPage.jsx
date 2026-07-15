@@ -16,7 +16,7 @@ export default function BrushUpsPage({ session }) {
         id,
         company_name,
         job_title,
-        is_active,
+        status,
         synthesis_results (
           synthesis_brush_up_topics (
             topic,
@@ -33,7 +33,12 @@ export default function BrushUpsPage({ session }) {
       `
         )
         .eq("user_id", session.user.id)
-        .eq("is_active", true);
+        .in("status", [
+          "resume_optimized",
+          "applied",
+          "interviewing",
+          "awaiting_response",
+        ]);
 
       if (error) {
         console.error("Brush ups load error:", error);

@@ -58,7 +58,7 @@ function createExecution(overrides = {}) {
     created_at: "2026-07-09T12:00:00.000Z",
     company_name: "Blue Origin",
     job_title: "Software Developer",
-    is_active: true,
+    status: "resume_optimized",
     final_chosen_resume: "Nicole Griesmeyer\n\nSoftware Developer",
     synthesis_results: [
       {
@@ -170,10 +170,10 @@ describe("HistoryPage", () => {
     expect(screen.getByText("Blue Origin")).toBeInTheDocument();
 
     expect(
-      screen.getByRole("button", {
-        name: "Active",
+      screen.getByRole("combobox", {
+        name: "Application status for Software Developer",
       })
-    ).toHaveClass("status-active");
+    ).toHaveValue("resume_optimized");
 
     expect(screen.getByText("Applied:")).toBeInTheDocument();
   });
@@ -221,7 +221,7 @@ describe("HistoryPage", () => {
     expect(screen.getByText("Unknown Company")).toBeInTheDocument();
   });
 
-  test("toggles an active execution to inactive", async () => {
+  test("updates an execution status", async () => {
     const user = userEvent.setup();
 
     const historyQuery = createHistoryQuery({
@@ -238,25 +238,21 @@ describe("HistoryPage", () => {
 
     render(<HistoryPage session={session} />);
 
-    const activeButton = await screen.findByRole("button", {
-      name: "Active",
+    const statusSelect = await screen.findByRole("combobox", {
+      name: "Application status for Software Developer",
     });
 
-    await user.click(activeButton);
+    await user.selectOptions(statusSelect, "interviewing");
 
     expect(updateQuery.update).toHaveBeenCalledWith({
-      is_active: false,
+      status: "interviewing",
     });
 
     expect(updateQuery.eq).toHaveBeenNthCalledWith(1, "id", "execution-1");
 
     expect(updateQuery.eq).toHaveBeenNthCalledWith(2, "user_id", "user-123");
 
-    expect(
-      await screen.findByRole("button", {
-        name: "Inactive",
-      })
-    ).toHaveClass("status-inactive");
+    expect(statusSelect).toHaveValue("interviewing");
   });
 
   test("does not change status when the database update fails", async () => {
@@ -284,17 +280,23 @@ describe("HistoryPage", () => {
 
     render(<HistoryPage session={session} />);
 
-    const activeButton = await screen.findByRole("button", {
-      name: "Active",
+    const statusSelect = await screen.findByRole("combobox", {
+      name: "Application status for Software Developer",
     });
 
-    await user.click(activeButton);
+    expect(statusSelect).toHaveValue("resume_optimized");
 
-    expect(
-      screen.getByRole("button", {
-        name: "Active",
-      })
-    ).toBeInTheDocument();
+    await user.selectOptions(statusSelect, "interviewing");
+
+    expect(updateQuery.update).toHaveBeenCalledWith({
+      status: "interviewing",
+    });
+
+    expect(updateQuery.eq).toHaveBeenNthCalledWith(1, "id", "execution-1");
+
+    expect(updateQuery.eq).toHaveBeenNthCalledWith(2, "user_id", "user-123");
+
+    expect(statusSelect).toHaveValue("resume_optimized");
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Status update error:",

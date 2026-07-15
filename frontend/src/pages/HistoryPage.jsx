@@ -1,6 +1,33 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabase";
 
+const STATUS_OPTIONS = [
+  {
+    value: "resume_optimized",
+    label: "Resume Optimized",
+  },
+  {
+    value: "applied",
+    label: "Applied",
+  },
+  {
+    value: "interviewing",
+    label: "Interviewing",
+  },
+  {
+    value: "awaiting_response",
+    label: "Awaiting Response",
+  },
+  {
+    value: "rejected",
+    label: "Rejected",
+  },
+  {
+    value: "no_longer_interested",
+    label: "No Longer Interested",
+  },
+];
+
 export default function HistoryPage({ session }) {
   function openFinalResume(finalResumeText) {
     const resumeWindow = window.open("", "_blank");
@@ -34,13 +61,11 @@ export default function HistoryPage({ session }) {
     resumeWindow.document.close();
   }
 
-  async function toggleExecutionStatus(execution) {
-    const nextIsActive = !execution.is_active;
-
+  async function updateExecutionStatus(executionId, status) {
     const { error } = await supabase
       .from("tailor_resume_executions")
-      .update({ is_active: nextIsActive })
-      .eq("id", execution.id)
+      .update({ status })
+      .eq("id", executionId)
       .eq("user_id", session.user.id);
 
     if (error) {
@@ -49,8 +74,8 @@ export default function HistoryPage({ session }) {
     }
 
     setExecutions((currentExecutions) =>
-      currentExecutions.map((item) =>
-        item.id === execution.id ? { ...item, is_active: nextIsActive } : item
+      currentExecutions.map((execution) =>
+        execution.id === executionId ? { ...execution, status } : execution
       )
     );
   }
@@ -70,7 +95,7 @@ export default function HistoryPage({ session }) {
           created_at,
           company_name,
           job_title,
-          is_active,
+          status,
           final_chosen_resume,
           synthesis_results (
             estimated_new_match_score,
@@ -155,15 +180,26 @@ export default function HistoryPage({ session }) {
                     </button>
                   )}
 
-                  <button
-                    type="button"
-                    className={`status-toggle ${
-                      execution.is_active ? "status-active" : "status-inactive"
-                    }`}
-                    onClick={() => toggleExecutionStatus(execution)}
-                  >
-                    {execution.is_active ? "Active" : "Inactive"}
-                  </button>
+                  <label className="history-status-control">
+                    <span className="sr-only">Status: </span>
+
+                    <select
+                      className={`history-status-select status-${execution.status}`}
+                      value={execution.status}
+                      onChange={(event) =>
+                        updateExecutionStatus(execution.id, event.target.value)
+                      }
+                      aria-label={`Application status for ${
+                        execution.job_title || "this position"
+                      }`}
+                    >
+                      {STATUS_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
               </div>
 
